@@ -13,7 +13,7 @@ Description: Provides a unified interface for R code quality analysis inspired
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
     lintr (>= 3.0.0),
     styler (>= 1.9.0),
