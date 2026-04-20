@@ -143,13 +143,9 @@ sonar_analyse <- function(
       if (fs::file_exists(candidate)) lintr_config <- candidate
     }
 
-    if (!is.null(lintr_config) && fs::file_exists(lintr_config)) {
-      withr::with_dir(path, {
-        lintr::lint_dir(path, linters = lintr::read_settings(lintr_config)$linters)
-      })
-    } else {
+    withr::with_dir(path, {
       lintr::lint_dir(path)
-    }
+    })
   }, error = function(e) {
     cli::cli_warn("Lint error: {conditionMessage(e)}")
     list()

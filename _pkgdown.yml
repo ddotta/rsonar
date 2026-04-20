@@ -1,4 +1,4 @@
-url: https://SSM-Agriculture.github.io/rsonar/
+url: https://ddotta.github.io/rsonar/
 
 template:
   bootstrap: 5
@@ -14,7 +14,7 @@ home:
     technical debt and Quality Gate in a single HTML report.
   links:
     - text: View on GitHub
-      href: https://github.com/SSM-Agriculture/rsonar
+      href: https://github.com/ddotta/rsonar
   sidebar:
     structure: [links, license, community, citation, authors, dev]
 
@@ -41,7 +41,7 @@ navbar:
           href: articles/alternatives.html
     github:
       icon: fab fa-github
-      href: https://github.com/SSM-Agriculture/rsonar
+      href: https://github.com/ddotta/rsonar
       aria-label: GitHub
 
 reference:
