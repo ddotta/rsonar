@@ -259,10 +259,26 @@ sonar_analyse <- function(
          c(0.50, Inf)  ~ "E")
   )
 
-  list(
-    minutes = total_minutes,
-    hours   = round(total_minutes / 60, 2),
-    rating  = rating,
-    ratio   = ratio
+  breakdown <- data.frame(
+    category = c("Lint (errors)", "Lint (warnings)", "Lint (style)",
+                 "Style (styler)", "Best practices", "Coverage"),
+    issues   = c(m$n_lint_errors, m$n_lint_warnings, m$n_lint_style,
+                 m$n_style_issues,
+                 if (!is.na(m$gp_fails)) m$gp_fails else 0L,
+                 if (!is.na(m$coverage_pct)) round(max(0, 80 - m$coverage_pct)) else 0L),
+    minutes  = c(debt_lint_errors, debt_lint_warnings, debt_lint_style,
+                 debt_style, debt_gp, debt_coverage),
+    stringsAsFactors = FALSE
+  )
+
+  structure(
+    list(
+      minutes   = total_minutes,
+      hours     = round(total_minutes / 60, 2),
+      rating    = rating,
+      ratio     = ratio,
+      breakdown = breakdown
+    ),
+    class = "rsonar_debt"
   )
 }
