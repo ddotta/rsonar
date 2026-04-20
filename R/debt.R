@@ -111,6 +111,11 @@ dplyr_style_case <- function(value, cases) {
   "E"
 }
 
+#' Print an rsonar_debt Object
+#'
+#' @param x An `rsonar_debt` object.
+#' @param ... Additional arguments (ignored).
+#' @return `x` invisibly.
 #' @export
 print.rsonar_debt <- function(x, ...) {
   rating_color <- c(A = "green", B = "cyan", C = "yellow", D = "magenta", E = "red")

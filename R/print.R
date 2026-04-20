@@ -1,3 +1,8 @@
+#' Print an rsonar_result Object
+#'
+#' @param x An `rsonar_result` object.
+#' @param ... Additional arguments (ignored).
+#' @return `x` invisibly.
 #' @export
 print.rsonar_result <- function(x, ...) {
   m    <- x$metrics
@@ -35,6 +40,11 @@ print.rsonar_result <- function(x, ...) {
   invisible(x)
 }
 
+#' Summarise an rsonar_result Object
+#'
+#' @param object An `rsonar_result` object.
+#' @param ... Additional arguments (ignored).
+#' @return `object` invisibly.
 #' @export
 summary.rsonar_result <- function(object, ...) {
   print(object, ...)

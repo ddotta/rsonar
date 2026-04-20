@@ -112,6 +112,11 @@ sonar_diff <- function(current, baseline) {
   }, character(1))
 }
 
+#' Print an rsonar_diff Object
+#'
+#' @param x An `rsonar_diff` object.
+#' @param ... Additional arguments (ignored).
+#' @return `x` invisibly.
 #' @export
 print.rsonar_diff <- function(x, ...) {
   status <- if (x$improved) {

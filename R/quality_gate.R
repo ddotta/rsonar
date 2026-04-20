@@ -134,6 +134,11 @@ quality_gate <- function(
   gate
 }
 
+#' Print an rsonar_gate Object
+#'
+#' @param x An `rsonar_gate` object.
+#' @param ... Additional arguments (ignored).
+#' @return `x` invisibly.
 #' @export
 print.rsonar_gate <- function(x, ...) {
   status <- if (x$passed) {
