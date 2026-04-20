@@ -1,0 +1,15 @@
+# This files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+Thumbs.db
+docs
+inst/doc
+
+# This folders
+Data/
+Data_test/
+tests/testthat/output/
+tests/testthat/Data/
