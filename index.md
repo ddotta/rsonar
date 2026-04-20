@@ -7,6 +7,9 @@ it centralizes code quality analysis into a single interactive report,
 estimates **technical debt** and integrates natively into GitLab CI and
 GitHub Actions pipelines.
 
+See [this repository](https://github.com/ddotta/rsonar-examples) that
+illustrates some features of the rsonar package.
+
 It orchestrates four proven tools:
 
 | Tool                                                       | Role                                      |
