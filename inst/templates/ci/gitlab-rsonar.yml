@@ -1,0 +1,154 @@
+# ============================================================
+# Pipeline GitLab CI — rsonar (qualité du code R)
+# Inspiré de : https://github.com/ddotta/rsonar
+# ============================================================
+#
+# Remplacez ${R_QUALITY_IMAGE} par votre image Docker ou
+# utilisez la valeur par défaut rocker/r-base:latest.
+#
+# Variables à configurer dans GitLab CI/CD > Variables :
+#   - ARTIFACTORY_ROBOT_AUTH_TOKEN (optionnel, registre privé)
+#   - FORGE_REVERSE_HOST           (optionnel, registre privé)
+# ============================================================
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"'
+    - when: never
+
+variables:
+  DOCKER_AUTH_CONFIG: >-
+    {"auths": {"${FORGE_REVERSE_HOST}": {"auth": "${ARTIFACTORY_ROBOT_AUTH_TOKEN}"}}}
+
+image:
+  name: ${R_QUALITY_IMAGE:-rocker/r-base:latest}
+
+stages:
+  - install
+  - lint
+  - style
+  - coverage
+  - quality_gate
+  - report
+
+# ---- Installation des dépendances ----------------------------------------
+install-deps:
+  stage: install
+  script:
+    - |
+      R -q -e "
+      pkgs <- c('remotes','lintr','styler','covr','goodpractice',
+                'cli','jsonlite','xml2','glue','fs','rlang','withr')
+      miss <- pkgs[!(pkgs %in% rownames(installed.packages()))]
+      if (length(miss) > 0) {
+        install.packages(miss, repos = 'https://cloud.r-project.org',
+                         Ncpus = parallel::detectCores())
+      }
+      # Installer rsonar depuis les sources du dépôt courant
+      remotes::install_local('.', dependencies = FALSE, quiet = TRUE)
+      cat('Installation OK\n')
+      "
+  cache:
+    key: r-packages-${CI_COMMIT_REF_SLUG}
+    paths:
+      - /usr/local/lib/R/site-library
+
+# ---- Analyse statique (lintr) --------------------------------------------
+rsonar-lint:
+  stage: lint
+  needs: [install-deps]
+  script:
+    - |
+      R -q -e "
+      library(rsonar)
+      res <- sonar_analyse('.', include_coverage = FALSE, include_goodpractice = FALSE)
+      export_junit(res, 'junit-lint.xml')
+      export_sonar_json(res, 'sonar-issues.json')
+      n_err <- res\$metrics\$n_lint_errors
+      if (n_err > 0) {
+        cli::cli_abort('{n_err} erreur(s) de lint — pipeline bloquée.')
+      }
+      "
+  artifacts:
+    when: always
+    reports:
+      junit: junit-lint.xml
+    paths:
+      - sonar-issues.json
+    expire_in: 1 week
+
+# ---- Vérification du style -----------------------------------------------
+rsonar-style:
+  stage: style
+  needs: [install-deps]
+  script:
+    - |
+      R -q -e "
+      library(rsonar)
+      res <- sonar_analyse('.', include_lint = FALSE,
+                           include_coverage = FALSE, include_goodpractice = FALSE)
+      if (res\$metrics\$n_style_issues > 0) {
+        print(res\$style[res\$style\$changed, ])
+        cli::cli_abort('Style non conforme — exécutez styler::style_dir(\".\") puis recommittez.')
+      }
+      cat('Style OK\n')
+      "
+
+# ---- Couverture de tests (covr) ------------------------------------------
+rsonar-coverage:
+  stage: coverage
+  needs: [install-deps]
+  script:
+    - |
+      R -q -e "
+      library(rsonar)
+      res <- sonar_analyse('.', include_lint = FALSE,
+                           include_style = FALSE, include_goodpractice = FALSE)
+      pct <- res\$metrics\$coverage_pct
+      cat('Couverture :', pct, '%\n')
+      covr::to_cobertura(res\$coverage, 'coverage.xml')
+      "
+  coverage: '/Couverture : ([0-9.]+) %/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 1 week
+
+# ---- Quality Gate --------------------------------------------------------
+rsonar-gate:
+  stage: quality_gate
+  needs: [rsonar-lint, rsonar-style, rsonar-coverage]
+  script:
+    - |
+      R -q -e "
+      library(rsonar)
+      res <- sonar_analyse('.')
+      gate <- quality_gate(
+        res,
+        coverage_min    = 80,
+        lint_errors_max = 0,
+        style_issues_max = 0,
+        rating_min      = 'C',
+        fail_on_error   = TRUE
+      )
+      "
+
+# ---- Rapport HTML complet ------------------------------------------------
+rsonar-report:
+  stage: report
+  needs: [rsonar-gate]
+  script:
+    - |
+      R -q -e "
+      library(rsonar)
+      res <- sonar_analyse('.')
+      sonar_report(res, output = 'rsonar-report.html', open = FALSE)
+      cat('Rapport généré\n')
+      "
+  artifacts:
+    paths:
+      - rsonar-report.html
+    expire_in: 4 weeks

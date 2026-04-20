@@ -1,0 +1,27 @@
+linters: linters_with_defaults(
+  # Longueur de ligne (équivalent sonar : S1120)
+  line_length_linter(100),
+  # Longueur des noms d'objets (lisibilité)
+  object_length_linter(30),
+  # Complexité cyclomatique (équivalent sonar : S3776)
+  cyclocomp_linter(15),
+  # Code commenté (équivalent sonar : S125)
+  commented_code_linter(),
+  # Espaces en fin de ligne
+  trailing_whitespace_linter(),
+  # Vérification des symboles absolument inutilisés
+  unused_import_linter(),
+  # Pas de T/F à la place de TRUE/FALSE
+  T_and_F_symbol_linter(),
+  # Appels de fonctions sans espaces autour de = dans les args
+  equals_na_linter(),
+  # Indentation cohérente
+  indentation_linter(indent = 2L)
+)
+
+exclusions: list(
+  "renv",
+  "packrat",
+  "vendor",
+  "tests/testthat/_snaps"
+)

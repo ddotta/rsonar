@@ -1,0 +1,145 @@
+# ============================================================
+# GitHub Actions Workflow — rsonar (qualité du code R)
+# Inspiré de : https://github.com/ddotta/rsonar
+# ============================================================
+name: rsonar — Qualité du code R
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  rsonar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurer R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Installer les dépendances système
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            libxml2-dev libcurl4-openssl-dev libssl-dev libgit2-dev
+
+      - name: Cache des packages R
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: r-${{ runner.os }}-
+
+      - name: Installer les dépendances
+        run: |
+          Rscript -e "
+          pkgs <- c('remotes','lintr','styler','covr','goodpractice',
+                    'cli','jsonlite','xml2','glue','fs','rlang','withr')
+          miss <- pkgs[!(pkgs %in% rownames(installed.packages()))]
+          if (length(miss) > 0)
+            install.packages(miss, repos = 'https://cloud.r-project.org')
+          remotes::install_local('.', dependencies = FALSE, quiet = TRUE)
+          "
+
+      # ---- Lint ----
+      - name: Analyse statique (lintr)
+        run: |
+          Rscript -e "
+          library(rsonar)
+          res <- sonar_analyse('.', include_coverage = FALSE,
+                                    include_goodpractice = FALSE)
+          export_junit(res, 'junit-lint.xml')
+          export_sonar_json(res, 'sonar-issues.json')
+          if (res\$metrics\$n_lint_errors > 0)
+            stop(res\$metrics\$n_lint_errors, ' erreur(s) de lint')
+          "
+
+      - name: Publier les résultats lint (JUnit)
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: junit-lint.xml
+          check_name: "rsonar — Lint"
+
+      # ---- Style ----
+      - name: Vérification du style (styler)
+        run: |
+          Rscript -e "
+          library(rsonar)
+          res <- sonar_analyse('.', include_lint = FALSE,
+                                    include_coverage = FALSE,
+                                    include_goodpractice = FALSE)
+          if (res\$metrics\$n_style_issues > 0)
+            stop(res\$metrics\$n_style_issues, ' fichier(s) non conforme(s) — styler::style_dir(\".\") puis re-commit')
+          "
+
+      # ---- Couverture ----
+      - name: Couverture de tests (covr)
+        run: |
+          Rscript -e "
+          library(rsonar)
+          res <- sonar_analyse('.', include_lint = FALSE,
+                                    include_style = FALSE,
+                                    include_goodpractice = FALSE)
+          pct <- res\$metrics\$coverage_pct
+          cat('::notice::Couverture :', pct, '%\n')
+          if (!is.na(pct)) covr::to_cobertura(res\$coverage, 'coverage.xml')
+          "
+
+      - name: Publier la couverture
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+
+      # ---- Quality Gate ----
+      - name: Quality Gate
+        run: |
+          Rscript -e "
+          library(rsonar)
+          res <- sonar_analyse('.')
+          quality_gate(res,
+            coverage_min    = 80,
+            lint_errors_max = 0,
+            style_issues_max = 0,
+            rating_min      = 'C',
+            fail_on_error   = TRUE)
+          "
+
+      # ---- Rapport HTML ----
+      - name: Générer le rapport HTML
+        if: always()
+        run: |
+          Rscript -e "
+          library(rsonar)
+          res <- sonar_analyse('.')
+          sonar_report(res, output = 'rsonar-report.html', open = FALSE)
+          "
+
+      - name: Upload rapport HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsonar-report
+          path: rsonar-report.html
+          retention-days: 30
+
+      - name: Upload sonar-issues.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-issues
+          path: sonar-issues.json

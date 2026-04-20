@@ -1,0 +1,85 @@
+url: https://SSM-Agriculture.github.io/rsonar/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#0969da"
+    code-font-size: 0.85em
+
+home:
+  title: "rsonar — R Code Quality"
+  description: >
+    SonarQube equivalent for R: static analysis, style, coverage,
+    technical debt and Quality Gate in a single HTML report.
+  links:
+    - text: View on GitHub
+      href: https://github.com/SSM-Agriculture/rsonar
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [github]
+  components:
+    intro:
+      text: "Quick Start"
+      href: articles/introduction.html
+    articles:
+      text: "Guides"
+      menu:
+        - text: "Introduction to rsonar"
+          href: articles/introduction.html
+        - text: "---"
+        - text: "CI/CD Integration"
+          href: articles/ci-integration.html
+        - text: "Technical Debt"
+          href: articles/technical-debt.html
+        - text: "---"
+        - text: "Alternatives and Added Value"
+          href: articles/alternatives.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/SSM-Agriculture/rsonar
+      aria-label: GitHub
+
+reference:
+  - title: "Analysis"
+    desc: "Core analysis functions"
+    contents:
+      - sonar_analyse
+  - title: "Quality and Debt"
+    desc: "Metrics and thresholds"
+    contents:
+      - quality_gate
+      - debt_index
+  - title: "Comparison and Trends"
+    desc: "Track quality over time"
+    contents:
+      - sonar_diff
+      - sonar_trend
+  - title: "Reports and Exports"
+    desc: "Report generation"
+    contents:
+      - sonar_report
+      - export_sonar_json
+      - export_junit
+      - export_sarif
+  - title: "Project Setup"
+    desc: "Initialization and templates"
+    contents:
+      - use_rsonar_lintr
+      - use_rsonar_ci
+  - title: "S3 Methods"
+    desc: ""
+    contents:
+      - print.rsonar_result
+      - print.rsonar_debt
+      - print.rsonar_gate
+      - print.rsonar_diff
+
+news:
+  releases:
+    - text: "Changelog"
+      href: news/index.html
