@@ -78,6 +78,7 @@ reference:
       - print.rsonar_debt
       - print.rsonar_gate
       - print.rsonar_diff
+      - summary.rsonar_result
 
 news:
   releases:

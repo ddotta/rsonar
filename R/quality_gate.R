@@ -128,7 +128,7 @@ quality_gate <- function(
 
   if (!all_passed && fail_on_error) {
     print(gate)
-    cli::cli_abort("Quality Gate \u00e9chou\u00e9 — arr\u00eat de la pipeline.")
+    cli::cli_abort("Quality Gate failed --- stopping the pipeline.")
   }
 
   gate

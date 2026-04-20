@@ -30,8 +30,12 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, any::roxygen2, local::.
           needs: website
+
+      - name: Generate documentation
+        run: roxygen2::roxygenise()
+        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
@@ -39,7 +43,7 @@ jobs:
 
       - name: Deploy to GitHub pages 🚀
         if: github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           clean: false
           branch: gh-pages

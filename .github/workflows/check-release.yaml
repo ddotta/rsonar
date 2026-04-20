@@ -25,7 +25,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: any::rcmdcheck, any::roxygen2
           needs: check
+
+      - name: Generate documentation
+        run: roxygen2::roxygenise()
+        shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2

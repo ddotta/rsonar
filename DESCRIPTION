@@ -21,7 +21,6 @@ Imports:
     goodpractice (>= 1.0.4),
     cli (>= 3.6.0),
     jsonlite (>= 1.8.0),
-    xml2 (>= 1.3.0),
     glue (>= 1.7.0),
     fs (>= 1.6.0),
     rlang (>= 1.1.0),
@@ -33,6 +32,6 @@ Suggests:
     pkgdown,
     htmltools
 VignetteBuilder: knitr
-URL: https://github.com/ddotta/rsonar
+URL: https://ddotta.github.io/rsonar/, https://github.com/ddotta/rsonar
 BugReports: https://github.com/ddotta/rsonar/issues
 Config/testthat/edition: 3
