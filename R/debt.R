@@ -119,7 +119,7 @@ print.rsonar_debt <- function(x, ...) {
   cli::cli_h2("rsonar Technical Debt")
   cli::cli_inform(c(
     "i" = "Estimated duration: {x$hours}h ({x$minutes} min)",
-    "i" = cli::col_br_white("SQALE rating: ") %+% cli::style_bold(x$rating)
+    "i" = paste0(cli::col_br_white("SQALE rating: "), cli::style_bold(x$rating))
   ))
   cli::cli_h3("Breakdown by category")
   print(x$breakdown[x$breakdown$minutes > 0, c("category", "issues", "minutes")])
