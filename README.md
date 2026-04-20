@@ -1,4 +1,4 @@
-:package: Package `rsonar` <img src="man/figures/hex_rsonar.png" width=110 align="right"/>
+# :package: Package `rsonar` <img src="man/figures/hex_rsonar.png" width=110 align="right"/>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/SSM-Agriculture/rsonar/workflows/R-CMD-check/badge.svg)](https://github.com/SSM-Agriculture/rsonar/actions)
