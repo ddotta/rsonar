@@ -1,14 +1,14 @@
 # ============================================================
-# Pipeline GitLab CI — rsonar (qualité du code R)
-# Inspiré de : https://github.com/ddotta/rsonar
+# GitLab CI Pipeline — rsonar (R code quality)
+# Inspired by: https://github.com/ddotta/rsonar
 # ============================================================
 #
-# Remplacez ${R_QUALITY_IMAGE} par votre image Docker ou
-# utilisez la valeur par défaut rocker/r-base:latest.
+# Replace ${R_QUALITY_IMAGE} with your Docker image or
+# use the default value rocker/r-base:latest.
 #
-# Variables à configurer dans GitLab CI/CD > Variables :
-#   - ARTIFACTORY_ROBOT_AUTH_TOKEN (optionnel, registre privé)
-#   - FORGE_REVERSE_HOST           (optionnel, registre privé)
+# Variables to configure in GitLab CI/CD > Variables:
+#   - ARTIFACTORY_ROBOT_AUTH_TOKEN (optional, private registry)
+#   - FORGE_REVERSE_HOST           (optional, private registry)
 # ============================================================
 
 workflow:
@@ -32,7 +32,7 @@ stages:
   - quality_gate
   - report
 
-# ---- Installation des dépendances ----------------------------------------
+# ---- Install dependencies ------------------------------------------------
 install-deps:
   stage: install
   script:
@@ -45,7 +45,7 @@ install-deps:
         install.packages(miss, repos = 'https://cloud.r-project.org',
                          Ncpus = parallel::detectCores())
       }
-      # Installer rsonar depuis les sources du dépôt courant
+      # Install rsonar from the current repository sources
       remotes::install_local('.', dependencies = FALSE, quiet = TRUE)
       cat('Installation OK\n')
       "
@@ -54,7 +54,7 @@ install-deps:
     paths:
       - /usr/local/lib/R/site-library
 
-# ---- Analyse statique (lintr) --------------------------------------------
+# ---- Static analysis (lintr) ---------------------------------------------
 rsonar-lint:
   stage: lint
   needs: [install-deps]
@@ -67,7 +67,7 @@ rsonar-lint:
       export_sonar_json(res, 'sonar-issues.json')
       n_err <- res\$metrics\$n_lint_errors
       if (n_err > 0) {
-        cli::cli_abort('{n_err} erreur(s) de lint — pipeline bloquée.')
+        cli::cli_abort('{n_err} lint error(s) — pipeline blocked.')
       }
       "
   artifacts:
@@ -78,7 +78,7 @@ rsonar-lint:
       - sonar-issues.json
     expire_in: 1 week
 
-# ---- Vérification du style -----------------------------------------------
+# ---- Style check ----------------------------------------------------------
 rsonar-style:
   stage: style
   needs: [install-deps]
@@ -90,12 +90,12 @@ rsonar-style:
                            include_coverage = FALSE, include_goodpractice = FALSE)
       if (res\$metrics\$n_style_issues > 0) {
         print(res\$style[res\$style\$changed, ])
-        cli::cli_abort('Style non conforme — exécutez styler::style_dir(\".\") puis recommittez.')
+        cli::cli_abort('Style not conforming — run styler::style_dir(\".\") then re-commit.')
       }
       cat('Style OK\n')
       "
 
-# ---- Couverture de tests (covr) ------------------------------------------
+# ---- Test coverage (covr) -------------------------------------------------
 rsonar-coverage:
   stage: coverage
   needs: [install-deps]
@@ -106,10 +106,10 @@ rsonar-coverage:
       res <- sonar_analyse('.', include_lint = FALSE,
                            include_style = FALSE, include_goodpractice = FALSE)
       pct <- res\$metrics\$coverage_pct
-      cat('Couverture :', pct, '%\n')
+      cat('Coverage:', pct, '%\n')
       covr::to_cobertura(res\$coverage, 'coverage.xml')
       "
-  coverage: '/Couverture : ([0-9.]+) %/'
+  coverage: '/Coverage: ([0-9.]+) %/'
   artifacts:
     reports:
       coverage_report:
@@ -117,7 +117,7 @@ rsonar-coverage:
         path: coverage.xml
     expire_in: 1 week
 
-# ---- Quality Gate --------------------------------------------------------
+# ---- Quality Gate ---------------------------------------------------------
 rsonar-gate:
   stage: quality_gate
   needs: [rsonar-lint, rsonar-style, rsonar-coverage]
@@ -136,7 +136,7 @@ rsonar-gate:
       )
       "
 
-# ---- Rapport HTML complet ------------------------------------------------
+# ---- Full HTML report -----------------------------------------------------
 rsonar-report:
   stage: report
   needs: [rsonar-gate]
@@ -146,7 +146,7 @@ rsonar-report:
       library(rsonar)
       res <- sonar_analyse('.')
       sonar_report(res, output = 'rsonar-report.html', open = FALSE)
-      cat('Rapport généré\n')
+      cat('Report generated\n')
       "
   artifacts:
     paths:

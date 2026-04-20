@@ -1,8 +1,8 @@
 # ============================================================
-# GitHub Actions Workflow — rsonar (qualité du code R)
-# Inspiré de : https://github.com/ddotta/rsonar
+# GitHub Actions Workflow — rsonar (R code quality)
+# Inspired by: https://github.com/ddotta/rsonar
 # ============================================================
-name: rsonar — Qualité du code R
+name: rsonar — R Code Quality
 
 on:
   push:
@@ -14,6 +14,7 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
+  security-events: write
 
 jobs:
   rsonar:
@@ -23,26 +24,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurer R
+      - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: "release"
           use-public-rspm: true
 
-      - name: Installer les dépendances système
+      - name: Install system dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends \
             libxml2-dev libcurl4-openssl-dev libssl-dev libgit2-dev
 
-      - name: Cache des packages R
+      - name: Cache R packages
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
           key: r-${{ runner.os }}-${{ hashFiles('DESCRIPTION') }}
           restore-keys: r-${{ runner.os }}-
 
-      - name: Installer les dépendances
+      - name: Install dependencies
         run: |
           Rscript -e "
           pkgs <- c('remotes','lintr','styler','covr','goodpractice',
@@ -54,7 +55,7 @@ jobs:
           "
 
       # ---- Lint ----
-      - name: Analyse statique (lintr)
+      - name: Static analysis (lintr)
         run: |
           Rscript -e "
           library(rsonar)
@@ -62,19 +63,27 @@ jobs:
                                     include_goodpractice = FALSE)
           export_junit(res, 'junit-lint.xml')
           export_sonar_json(res, 'sonar-issues.json')
+          export_sarif(res, 'rsonar-lint.sarif')
           if (res\$metrics\$n_lint_errors > 0)
-            stop(res\$metrics\$n_lint_errors, ' erreur(s) de lint')
+            stop(res\$metrics\$n_lint_errors, ' lint error(s)')
           "
 
-      - name: Publier les résultats lint (JUnit)
+      - name: Publish lint results (JUnit)
         if: always()
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         with:
           report_paths: junit-lint.xml
           check_name: "rsonar — Lint"
 
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: rsonar-lint.sarif
+          category: rsonar
+
       # ---- Style ----
-      - name: Vérification du style (styler)
+      - name: Style check (styler)
         run: |
           Rscript -e "
           library(rsonar)
@@ -82,11 +91,11 @@ jobs:
                                     include_coverage = FALSE,
                                     include_goodpractice = FALSE)
           if (res\$metrics\$n_style_issues > 0)
-            stop(res\$metrics\$n_style_issues, ' fichier(s) non conforme(s) — styler::style_dir(\".\") puis re-commit')
+            stop(res\$metrics\$n_style_issues, ' file(s) not conforming — run styler::style_dir(\".\") then re-commit')
           "
 
-      # ---- Couverture ----
-      - name: Couverture de tests (covr)
+      # ---- Coverage ----
+      - name: Test coverage (covr)
         run: |
           Rscript -e "
           library(rsonar)
@@ -94,13 +103,13 @@ jobs:
                                     include_style = FALSE,
                                     include_goodpractice = FALSE)
           pct <- res\$metrics\$coverage_pct
-          cat('::notice::Couverture :', pct, '%\n')
+          cat('::notice::Coverage:', pct, '%\n')
           if (!is.na(pct)) covr::to_cobertura(res\$coverage, 'coverage.xml')
           "
 
-      - name: Publier la couverture
+      - name: Upload coverage
         if: always()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: coverage.xml
           fail_ci_if_error: false
@@ -119,8 +128,8 @@ jobs:
             fail_on_error   = TRUE)
           "
 
-      # ---- Rapport HTML ----
-      - name: Générer le rapport HTML
+      # ---- HTML Report ----
+      - name: Generate HTML report
         if: always()
         run: |
           Rscript -e "
@@ -129,7 +138,7 @@ jobs:
           sonar_report(res, output = 'rsonar-report.html', open = FALSE)
           "
 
-      - name: Upload rapport HTML
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:

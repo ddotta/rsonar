@@ -101,10 +101,11 @@ debt_index <- function(
 }
 
 # Internal helper: simple dplyr::case_when equivalent
+# Each case is a formula: c(lower, upper) ~ "label"
 dplyr_style_case <- function(value, cases) {
   for (case in cases) {
-    range <- case[[1]]
-    label <- case[[2]]
+    range <- eval(case[[2]])
+    label <- eval(case[[3]])
     if (value >= range[1] && value < range[2]) return(label)
   }
   "E"
