@@ -11,6 +11,10 @@ on:
 
 name: pkgdown
 
+permissions:
+  contents: write
+  pages: write
+
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
@@ -45,6 +49,6 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          clean: false
+          clean: true
           branch: gh-pages
           folder: docs
