@@ -1,6 +1,4 @@
-# News
-
-## rsonar 0.2.0 (2026-04-20)
+# rsonar 0.2.0 (2026-04-20)
 
 ### New features
 
@@ -17,7 +15,7 @@
 * Vignettes updated with `sonar_diff()`, `export_sarif()` and `sonar_trend()`
   examples
 
-## rsonar 0.1.0 (2026-04-20)
+# rsonar 0.1.0 (2026-04-20)
 
 ### New features
 
