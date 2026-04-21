@@ -44,6 +44,11 @@ sonar_report <- function(
 .build_html_report <- function(x, title) {
   m    <- x$metrics
   debt <- x$debt
+  quality_pct <- if (!is.null(debt)) {
+    round(100 * (1 - min(1, as.numeric(debt$ratio))), 1)
+  } else {
+    NA_real_
+  }
 
   # SQALE rating color
   rating_css <- c(A = "#1a7f37", B = "#0969da", C = "#bf8700",
@@ -168,6 +173,11 @@ sonar_report <- function(
         <div class="metric-label">SQALE Rating</div>
         <div style="margin:0.5rem 0"><span class="rating-badge">{if (!is.null(debt)) debt$rating else "?"}</span></div>
         <div class="metric-label">{if (!is.null(debt)) paste0(debt$hours, "h of debt") else ""}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Quality Score</div>
+        <div class="metric-value" style="color:{if (!is.na(quality_pct) && quality_pct >= 80) "#1a7f37" else if (!is.na(quality_pct) && quality_pct >= 60) "#bf8700" else "#cf222e"}">{if (!is.na(quality_pct)) paste0(quality_pct, "%") else "N/A"}</div>
+        <div class="metric-label">derived from debt ratio</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Lint Issues</div>

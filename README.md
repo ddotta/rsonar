@@ -84,6 +84,8 @@ export_sarif(res, "results.sarif")
 export_junit(res, "test-results.xml")
 ```
 
+`print(res)` now also displays the **quality score (%)** alongside the SQALE rating.
+
 ## Quick Local IDE Check
 
 If you want instant feedback while coding (without CI), run:

@@ -25,11 +25,13 @@ print.rsonar_result <- function(x, ...) {
   ))
 
   if (!is.null(debt)) {
+    quality_pct <- round(100 * (1 - min(1, as.numeric(debt$ratio))), 1)
     rating_sym <- c(A = "\U0001f7e2", B = "\U0001f535", C = "\U0001f7e1",
                     D = "\U0001f7e0", E = "\U0001f534")
     cli::cli_h2("Technical Debt")
     cli::cli_inform(c(
       " " = "{rating_sym[[debt$rating]]} SQALE rating: {debt$rating}",
+      " " = "⭐ Quality score: {quality_pct}%",
       " " = "\u23f1  Estimated duration: {debt$hours}h ({debt$minutes} min)"
     ))
   }
