@@ -92,25 +92,26 @@ analysis**.
 
 ## Comparison table
 
-| Feature                     | rsonar | lintr alone | r-lib/actions | SonarQube +plugin |
-|-----------------------------|:------:|:-----------:|:-------------:|:-----------------:|
-| Static analysis             |   ✅   |     ✅      |      ✅       |    ⚠️ limited     |
-| Style checking              |   ✅   | ⚠️ partial  |      ✅       |        ❌         |
-| Test coverage               |   ✅   |     ❌      |      ✅       |        ✅         |
-| Packaging best practices    |   ✅   |     ❌      |      ❌       |        ❌         |
-| **Interactive HTML report** |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Technical debt (SQALE)**  |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Quality Gate**            |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Analysis comparison**     |   ✅   |     ❌      |      ❌       |        ✅         |
-| **SARIF export**            |   ✅   |     ❌      |      ❌       |        ❌         |
-| **Trend tracking**          |   ✅   |     ❌      |      ❌       |        ✅         |
-| R scripts (non-package)     |   ✅   |     ✅      |      ❌       |        ❌         |
-| Native GitLab CI            |   ✅   |  ⚠️ manual  |      ❌       |    ✅ (server)    |
-| Native GitHub Actions       |   ✅   |  ⚠️ manual  |      ✅       |    ✅ (server)    |
-| **SonarQube JSON export**   |   ✅   |     ❌      |      ❌       |        N/A        |
-| JUnit XML export            |   ✅   |     ❌      |      ✅       |        ✅         |
-| **Zero server required**    |   ✅   |     ✅      |      ✅       |        ❌         |
-| Pure R language             |   ✅   |     ✅      |      ✅       |      ❌ Java      |
+| Feature                         | rsonar | lintr alone | r-lib/actions | SonarQube +plugin |
+|---------------------------------|:------:|:-----------:|:-------------:|:-----------------:|
+| Static analysis                 |   ✅   |     ✅      |      ✅       |    ⚠️ limited     |
+| Style checking                  |   ✅   | ⚠️ partial  |      ✅       |        ❌         |
+| Test coverage                   |   ✅   |     ❌      |      ✅       |        ✅         |
+| Packaging best practices        |   ✅   |     ❌      |      ❌       |        ❌         |
+| **Interactive HTML report**     |   ✅   |     ❌      |      ❌       |        ✅         |
+| **Technical debt (SQALE)**      |   ✅   |     ❌      |      ❌       |        ✅         |
+| **Quality Gate**                |   ✅   |     ❌      |      ❌       |        ✅         |
+| **Analysis comparison**         |   ✅   |     ❌      |      ❌       |        ✅         |
+| **SARIF export**                |   ✅   |     ❌      |      ❌       |        ❌         |
+| **Trend tracking**              |   ✅   |     ❌      |      ❌       |        ✅         |
+| **Quick IDE quality score (%)** |   ✅   |     ❌      |      ❌       |        ❌         |
+| R scripts (non-package)         |   ✅   |     ✅      |      ❌       |        ❌         |
+| Native GitLab CI                |   ✅   |  ⚠️ manual  |      ❌       |    ✅ (server)    |
+| Native GitHub Actions           |   ✅   |  ⚠️ manual  |      ✅       |    ✅ (server)    |
+| **SonarQube JSON export**       |   ✅   |     ❌      |      ❌       |        N/A        |
+| JUnit XML export                |   ✅   |     ❌      |      ✅       |        ✅         |
+| **Zero server required**        |   ✅   |     ✅      |      ✅       |        ❌         |
+| Pure R language                 |   ✅   |     ✅      |      ✅       |      ❌ Java      |
 
 ------------------------------------------------------------------------
 
@@ -180,6 +181,16 @@ SonarQube’s project history.
 
 Unlike `goodpractice` or `rcmdcheck`, `rsonar` analyzes any directory
 containing `.R` files, even without a `DESCRIPTION`.
+
+### 9. Quick local score without CI
+
+[`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
+gives developers an immediate percentage and rating directly in the IDE,
+without any server or CI workflow:
+
+``` r
+quality_score(".")
+```
 
 ------------------------------------------------------------------------
 

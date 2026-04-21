@@ -45,6 +45,11 @@ $$ratio = \frac{D_{total}}{N_{files} \times 30{\mspace{6mu}\text{min}}}$$
 | 20–50% | **D**  | Poor quality       |
 | \> 50% | **E**  | Critical           |
 
+[`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
+exposes the same debt ratio as an easy-to-read percentage for IDE usage:
+
+$$score = 100 \times \left( 1 - min(1,ratio) \right)$$
+
 ------------------------------------------------------------------------
 
 ## Example analysis
@@ -55,6 +60,9 @@ library(rsonar)
 res  <- sonar_analyse(".")
 debt <- debt_index(res)
 print(debt)
+
+# Fast local score shown in IDE
+quality_score(res)
 ```
 
     ── rsonar Technical Debt ───────────────────────────────────

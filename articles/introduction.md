@@ -64,6 +64,19 @@ function:
 print(res)
 ```
 
+### 2bis. Get a quick quality percentage in your IDE
+
+For rapid local feedback during development (without CI):
+
+``` r
+quality_score(".")
+```
+
+By default,
+[`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
+runs a fast analysis (coverage and goodpractice disabled) and displays a
+percentage score plus the SQALE rating.
+
     ── rsonar — Quality Report ──────────────────────────────────
     ℹ Project  : /home/user/mypackage
     ℹ Analysis : 2026-04-20 14:32

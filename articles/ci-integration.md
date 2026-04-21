@@ -57,7 +57,7 @@ before_script:
   - |
     R -q -e "
     pkgs <- c('remotes','lintr','styler','covr','goodpractice',
-              'cli','jsonlite','xml2','glue','fs','rlang','withr')
+              'cli','jsonlite','xml2','glue','fs','rlang','withr','testthat')
     miss <- pkgs[!(pkgs %in% rownames(installed.packages()))]
     if (length(miss) > 0) install.packages(miss, repos='https://cloud.r-project.org')
     remotes::install_local('.', dependencies=FALSE, quiet=TRUE)
@@ -228,7 +228,7 @@ jobs:
 
       - name: Publish JUnit results
         if: always()
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         with:
           report_paths: junit-results.xml
 
@@ -292,6 +292,13 @@ pipeline {
 ## Makefile (local execution)
 
 To make it easy to run locally before pushing:
+
+If you only want a quick local indicator in your IDE, run:
+
+``` r
+library(rsonar)
+quality_score(".")
+```
 
 ``` makefile
 # Makefile

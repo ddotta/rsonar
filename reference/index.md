@@ -11,6 +11,8 @@ Core analysis functions
 
 Metrics and thresholds
 
+- [`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
+  : Quick Quality Score for IDE Usage
 - [`quality_gate()`](https://ddotta.github.io/rsonar/reference/quality_gate.md)
   : Define and Check a Quality Gate
 - [`debt_index()`](https://ddotta.github.io/rsonar/reference/debt_index.md)
@@ -51,6 +53,8 @@ Initialization and templates
 
 - [`print(`*`<rsonar_result>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_result.md)
   : Print an rsonar_result Object
+- [`print(`*`<rsonar_score>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_score.md)
+  : Print an rsonar_score Object
 - [`print(`*`<rsonar_debt>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_debt.md)
   : Print an rsonar_debt Object
 - [`print(`*`<rsonar_gate>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_gate.md)

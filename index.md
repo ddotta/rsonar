@@ -7,6 +7,9 @@ it centralizes code quality analysis into a single interactive report,
 estimates **technical debt** and integrates natively into GitLab CI and
 GitHub Actions pipelines.
 
+For a quick local check (without CI/forge), run `quality_score(".")` to
+display a quality percentage directly in your IDE console.
+
 See [this repository](https://github.com/ddotta/rsonar-examples) that
 illustrates some features of the rsonar package.
 
@@ -52,6 +55,9 @@ res <- sonar_analyse("path/to/my/package")
 # Console summary
 print(res)
 
+# Quick local quality percentage in IDE
+quality_score(res)
+
 # Interactive HTML report
 sonar_report(res, output = "quality.html")
 
@@ -76,6 +82,25 @@ export_sarif(res, "results.sarif")
 # Export JUnit XML (for GitLab CI artifacts)
 export_junit(res, "test-results.xml")
 ```
+
+## Quick Local IDE Check
+
+If you want instant feedback while coding (without CI), run:
+
+``` r
+library(rsonar)
+
+# Fast local score (by default: no coverage/goodpractice for speed)
+quality_score(".")
+```
+
+Typical output:
+
+    ── Quick Quality Score ─────────────────────────────────────
+    ℹ Path   : /path/to/project
+    ℹ Score  : 82.4%
+    ℹ Rating : B
+    ℹ Time   : 2026-04-21 10:15
 
 ## Alternatives and Added Value
 

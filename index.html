@@ -75,6 +75,7 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p><code>rsonar</code> is the R equivalent of <a href="https://www.sonarqube.org/" class="external-link">SonarQube</a>: it centralizes code quality analysis into a single interactive report, estimates <strong>technical debt</strong> and integrates natively into GitLab CI and GitHub Actions pipelines.</p>
+<p>For a quick local check (without CI/forge), run <code>quality_score(".")</code> to display a quality percentage directly in your IDE console.</p>
 <p>See <a href="https://github.com/ddotta/rsonar-examples" class="external-link">this repository</a> that illustrates some features of the rsonar package.</p>
 <p>It orchestrates four proven tools:</p>
 <table class="table">
@@ -177,6 +178,9 @@
 <span><span class="co"># Console summary</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Quick local quality percentage in IDE</span></span>
+<span><span class="fu"><a href="reference/quality_score.html">quality_score</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Interactive HTML report</span></span>
 <span><span class="fu"><a href="reference/sonar_report.html">sonar_report</a></span><span class="op">(</span><span class="va">res</span>, output <span class="op">=</span> <span class="st">"quality.html"</span><span class="op">)</span></span>
 <span></span>
@@ -200,6 +204,22 @@
 <span></span>
 <span><span class="co"># Export JUnit XML (for GitLab CI artifacts)</span></span>
 <span><span class="fu"><a href="reference/export_junit.html">export_junit</a></span><span class="op">(</span><span class="va">res</span>, <span class="st">"test-results.xml"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="quick-local-ide-check">Quick Local IDE Check<a class="anchor" aria-label="anchor" href="#quick-local-ide-check"></a>
+</h2>
+<p>If you want instant feedback while coding (without CI), run:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ddotta.github.io/rsonar/">rsonar</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fast local score (by default: no coverage/goodpractice for speed)</span></span>
+<span><span class="fu"><a href="reference/quality_score.html">quality_score</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>Typical output:</p>
+<pre><code>── Quick Quality Score ─────────────────────────────────────
+ℹ Path   : /path/to/project
+ℹ Score  : 82.4%
+ℹ Rating : B
+ℹ Time   : 2026-04-21 10:15</code></pre>
 </div>
 <div class="section level2">
 <h2 id="alternatives-and-added-value">Alternatives and Added Value<a class="anchor" aria-label="anchor" href="#alternatives-and-added-value"></a>

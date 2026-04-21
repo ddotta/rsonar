@@ -27,6 +27,15 @@
   [`sonar_trend()`](https://ddotta.github.io/rsonar/reference/sonar_trend.md)
   examples
 
+#### Improvements
+
+- Added
+  [`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
+  for fast local IDE feedback as a quality percentage
+- Improved analysis robustness in CI:
+  - style checks no longer require `roxygen2` for roxygen examples
+  - coverage checks reuse installed dependencies (`clean = FALSE`)
+
 ## rsonar 0.1.0 (2026-04-20)
 
 #### New features

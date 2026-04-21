@@ -167,6 +167,16 @@ tools available:</p>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="bis--get-a-quick-quality-percentage-in-your-ide">2bis. Get a quick quality percentage in your IDE<a class="anchor" aria-label="anchor" href="#bis--get-a-quick-quality-percentage-in-your-ide"></a>
+</h3>
+<p>For rapid local feedback during development (without CI):</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/quality_score.html">quality_score</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>By default, <code><a href="../reference/quality_score.html">quality_score()</a></code> runs a fast analysis
+(coverage and goodpractice disabled) and displays a percentage score
+plus the SQALE rating.</p>
 <pre><code>── rsonar — Quality Report ──────────────────────────────────
 ℹ Project  : /home/user/mypackage
 ℹ Analysis : 2026-04-20 14:32
@@ -185,7 +195,7 @@ tools available:</p>
 <div class="section level3">
 <h3 id="generate-the-html-report">3. Generate the HTML report<a class="anchor" aria-label="anchor" href="#generate-the-html-report"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sonar_report.html">sonar_report</a></span><span class="op">(</span><span class="va">res</span>, output <span class="op">=</span> <span class="st">"quality.html"</span><span class="op">)</span></span></code></pre></div>
 <p>The HTML report contains:</p>
 <ul>
@@ -205,7 +215,7 @@ minutes</li>
 <div class="section level3">
 <h3 id="check-the-quality-gate">4. Check the Quality Gate<a class="anchor" aria-label="anchor" href="#check-the-quality-gate"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/quality_gate.html">quality_gate</a></span><span class="op">(</span><span class="va">res</span>,</span>
 <span>  coverage_min     <span class="op">=</span> <span class="fl">80</span>,   <span class="co"># 80% minimum coverage</span></span>
 <span>  lint_errors_max  <span class="op">=</span> <span class="fl">0</span>,    <span class="co"># 0 errors tolerated</span></span>
@@ -222,7 +232,7 @@ minutes</li>
 <div class="section level3">
 <h3 id="set-up-the-project">5. Set up the project<a class="anchor" aria-label="anchor" href="#set-up-the-project"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Add the recommended rsonar .lintr</span></span>
 <span><span class="fu"><a href="../reference/use_rsonar_lintr.html">use_rsonar_lintr</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -239,7 +249,7 @@ minutes</li>
 </h2>
 <p><code>rsonar</code> also works on projects that are
 <strong>not</strong> R packages:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sonar_analyse.html">sonar_analyse</a></span><span class="op">(</span></span>
 <span>  <span class="st">"path/to/project"</span>,</span>
 <span>  include_coverage     <span class="op">=</span> <span class="cn">FALSE</span>,  <span class="co"># no tests/</span></span>
@@ -253,7 +263,7 @@ minutes</li>
 </h2>
 <p>Use <code><a href="../reference/sonar_diff.html">sonar_diff()</a></code> to compare two analyses and detect
 regressions:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">baseline</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sonar_analyse.html">sonar_analyse</a></span><span class="op">(</span><span class="st">"."</span>, include_coverage <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co"># ... make changes ...</span></span>
 <span><span class="va">current</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sonar_analyse.html">sonar_analyse</a></span><span class="op">(</span><span class="st">"."</span>, include_coverage <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -266,7 +276,7 @@ regressions:</p>
 </h2>
 <p>Use <code><a href="../reference/sonar_trend.html">sonar_trend()</a></code> in your CI pipeline to build a history
 of quality metrics:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sonar_analyse.html">sonar_analyse</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/sonar_trend.html">sonar_trend</a></span><span class="op">(</span><span class="va">res</span>, file <span class="op">=</span> <span class="st">"rsonar-history.json"</span><span class="op">)</span></span></code></pre></div>
 <hr>
@@ -277,7 +287,7 @@ of quality metrics:</p>
 <p>If your organization already uses SonarQube for other languages, you
 can inject <code>rsonar</code> results via the <strong>Generic Issue
 Import</strong>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/export_sonar_json.html">export_sonar_json</a></span><span class="op">(</span><span class="va">res</span>, <span class="st">"sonar-issues.json"</span><span class="op">)</span></span></code></pre></div>
 <p>Then in <code>sonar-project.properties</code>:</p>
 <pre><code><span><span class="va">sonar.externalIssuesReportPaths</span><span class="op">=</span><span class="va">sonar</span><span class="op">-</span><span class="va">issues.json</span></span></code></pre>
@@ -285,10 +295,10 @@ Import</strong>:</p>
 <div class="section level2">
 <h2 id="export-for-github-code-scanning-sarif">Export for GitHub Code Scanning (SARIF)<a class="anchor" aria-label="anchor" href="#export-for-github-code-scanning-sarif"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/export_sarif.html">export_sarif</a></span><span class="op">(</span><span class="va">res</span>, <span class="st">"results.sarif"</span><span class="op">)</span></span></code></pre></div>
 <p>For GitLab CI with JUnit artifacts:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/export_junit.html">export_junit</a></span><span class="op">(</span><span class="va">res</span>, <span class="st">"junit-results.xml"</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>

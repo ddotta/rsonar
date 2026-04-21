@@ -263,48 +263,55 @@ is:</p>
 <td align="center">✅</td>
 </tr>
 <tr class="odd">
+<td><strong>Quick IDE quality score (%)</strong></td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr class="even">
 <td>R scripts (non-package)</td>
 <td align="center">✅</td>
 <td align="center">✅</td>
 <td align="center">❌</td>
 <td align="center">❌</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Native GitLab CI</td>
 <td align="center">✅</td>
 <td align="center">⚠️ manual</td>
 <td align="center">❌</td>
 <td align="center">✅ (server)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Native GitHub Actions</td>
 <td align="center">✅</td>
 <td align="center">⚠️ manual</td>
 <td align="center">✅</td>
 <td align="center">✅ (server)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>SonarQube JSON export</strong></td>
 <td align="center">✅</td>
 <td align="center">❌</td>
 <td align="center">❌</td>
 <td align="center">N/A</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>JUnit XML export</td>
 <td align="center">✅</td>
 <td align="center">❌</td>
 <td align="center">✅</td>
 <td align="center">✅</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Zero server required</strong></td>
 <td align="center">✅</td>
 <td align="center">✅</td>
 <td align="center">✅</td>
 <td align="center">❌</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Pure R language</td>
 <td align="center">✅</td>
 <td align="center">✅</td>
@@ -383,6 +390,14 @@ history.</p>
 <p>Unlike <code>goodpractice</code> or <code>rcmdcheck</code>,
 <code>rsonar</code> analyzes any directory containing <code>.R</code>
 files, even without a <code>DESCRIPTION</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="quick-local-score-without-ci">9. Quick local score without CI<a class="anchor" aria-label="anchor" href="#quick-local-score-without-ci"></a>
+</h3>
+<p><code><a href="../reference/quality_score.html">quality_score()</a></code> gives developers an immediate percentage
+and rating directly in the IDE, without any server or CI workflow:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/quality_score.html">quality_score</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
