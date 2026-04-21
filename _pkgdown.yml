@@ -52,6 +52,7 @@ reference:
   - title: "Quality and Debt"
     desc: "Metrics and thresholds"
     contents:
+      - quality_score
       - quality_gate
       - debt_index
   - title: "Comparison and Trends"
@@ -75,6 +76,7 @@ reference:
     desc: ""
     contents:
       - print.rsonar_result
+      - print.rsonar_score
       - print.rsonar_debt
       - print.rsonar_gate
       - print.rsonar_diff

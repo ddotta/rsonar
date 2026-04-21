@@ -155,7 +155,12 @@ sonar_analyse <- function(
 .run_style <- function(r_files) {
   results <- lapply(r_files, function(f) {
     tryCatch({
-      res <- styler::style_file(as.character(f), dry = "on")
+      # Keep style checks lightweight: do not require roxygen2 for examples.
+      res <- styler::style_file(
+        as.character(f),
+        dry = "on",
+        include_roxygen_examples = FALSE
+      )
       data.frame(
         file    = as.character(f),
         changed = isTRUE(res$changed[1]),
@@ -171,7 +176,8 @@ sonar_analyse <- function(
 .run_coverage <- function(path) {
   tryCatch({
     withr::with_dir(path, {
-      covr::package_coverage(path = path)
+      # Reuse already-installed packages in CI to avoid missing Suggests.
+      covr::package_coverage(path = path, clean = FALSE)
     })
   }, error = function(e) {
     cli::cli_warn("Coverage could not be computed: {conditionMessage(e)}")

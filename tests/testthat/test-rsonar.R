@@ -170,3 +170,15 @@ test_that("sonar_trend appends to a history file", {
   history2 <- jsonlite::read_json(history_file)
   expect_equal(length(history2), 2)
 })
+
+test_that("quality_score provides a quick local percentage", {
+  tmp <- withr::local_tempdir()
+  writeLines("x <- 1\n", file.path(tmp, "ok.R"))
+
+  score <- quality_score(tmp, verbose = FALSE)
+
+  expect_s3_class(score, "rsonar_score")
+  expect_true(is.numeric(score$score))
+  expect_true(score$score >= 0 && score$score <= 100)
+  expect_true(score$rating %in% c("A", "B", "C", "D", "E"))
+})
