@@ -11,12 +11,17 @@
 <url><loc>https://ddotta.github.io/rsonar/index.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/news/index.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/debt_index.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/dot-create_merge_request.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/dot-find_air.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/dot-git_changed_files.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/export_junit.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/export_sarif.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/export_sonar_json.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/index.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/install_air.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_debt.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_diff.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_fix.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_gate.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_result.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/print.rsonar_score.html</loc></url>
@@ -25,6 +30,7 @@
 <url><loc>https://ddotta.github.io/rsonar/reference/rsonar-package.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/sonar_analyse.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/sonar_diff.html</loc></url>
+<url><loc>https://ddotta.github.io/rsonar/reference/sonar_fix.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/sonar_report.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/sonar_trend.html</loc></url>
 <url><loc>https://ddotta.github.io/rsonar/reference/summary.rsonar_result.html</loc></url>

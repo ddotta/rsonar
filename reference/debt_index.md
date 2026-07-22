@@ -82,6 +82,6 @@ if (FALSE) { # \dontrun{
 res <- sonar_analyse(".")
 d <- debt_index(res)
 print(d)
-# Total debt: 2.5h — Rating: B
+# Total debt: 2.5h - Rating: B
 } # }
 ```

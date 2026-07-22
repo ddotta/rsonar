@@ -113,6 +113,45 @@ Typical output:
 See the [full
 documentation](https://ddotta.github.io/rsonar/index.html).
 
+## Auto-Fix with air
+
+`rsonar` integrates with [**air**](https://github.com/posit-dev/air),
+Posit’s fast R code formatter, to automatically fix code style issues:
+
+``` r
+
+library(rsonar)
+
+# Install air (once per machine)
+install_air()
+
+# Check what would be changed (dry-run)
+fix <- sonar_fix(".", dry_run = TRUE)
+print(fix)
+
+# Auto-fix all R files in the project
+fix <- sonar_fix(".")
+
+# Auto-fix and create a Merge Request (GitLab CI)
+fix <- sonar_fix(".", create_mr = TRUE)
+```
+
+In CI pipelines, `rsonar-fix` is an **optional manual job** that: 1.
+Installs `air` via
+[`install_air()`](https://ddotta.github.io/rsonar/reference/install_air.md)
+2. Runs
+[`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md)
+to format all R files automatically 3. Creates a Merge Request (GitLab)
+or Pull Request (GitHub) with the changes
+
+This allows developers to review and merge auto-formatted code easily,
+without manual intervention.
+
+| Function | Purpose |
+|----|----|
+| [`install_air()`](https://ddotta.github.io/rsonar/reference/install_air.md) | Download and install the air formatter binary |
+| [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md) | Run air on R files, optionally create MR/PR |
+
 ## CI Integration
 
 See the [CI/CD
