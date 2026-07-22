@@ -1,12 +1,12 @@
-pandoc: 3.1.11
-pkgdown: 2.2.0
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   alternatives: alternatives.html
   ci-integration: ci-integration.html
   introduction: introduction.html
   technical-debt: technical-debt.html
-last_built: 2026-04-21T08:12Z
+last_built: 2026-07-22T08:22Z
 urls:
   reference: https://ddotta.github.io/rsonar/reference
   article: https://ddotta.github.io/rsonar/articles

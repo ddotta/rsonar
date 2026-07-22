@@ -18,7 +18,9 @@ Expectations) model used by SonarQube.
 
 The total debt is the sum of costs per category:
 
-$$D_{total} = D_{lint\_ err} + D_{lint\_ warn} + D_{style} + D_{coverage} + D_{gp}$$
+``` math
+D_{total} = D_{lint\_err} + D_{lint\_warn} + D_{style} + D_{coverage} + D_{gp}
+```
 
 With default costs:
 
@@ -35,7 +37,9 @@ With default costs:
 
 The rating is computed from the **debt-to-base-effort ratio**:
 
-$$ratio = \frac{D_{total}}{N_{files} \times 30{\mspace{6mu}\text{min}}}$$
+``` math
+ratio = \frac{D_{total}}{N_{files} \times 30 \text{ min}}
+```
 
 | Ratio  | Rating | Meaning            |
 |--------|--------|--------------------|
@@ -48,13 +52,16 @@ $$ratio = \frac{D_{total}}{N_{files} \times 30{\mspace{6mu}\text{min}}}$$
 [`quality_score()`](https://ddotta.github.io/rsonar/reference/quality_score.md)
 exposes the same debt ratio as an easy-to-read percentage for IDE usage:
 
-$$score = 100 \times \left( 1 - min(1,ratio) \right)$$
+``` math
+score = 100 \times (1 - min(1, ratio))
+```
 
 ------------------------------------------------------------------------
 
 ## Example analysis
 
 ``` r
+
 library(rsonar)
 
 res  <- sonar_analyse(".")
@@ -83,6 +90,7 @@ quality_score(res)
 Default costs can be adjusted to match your organization’s context:
 
 ``` r
+
 # Stricter costs for a critical project
 debt <- debt_index(res,
   cost_lint_error     = 60,   # 1h per error
@@ -103,6 +111,7 @@ debt <- debt_index(res,
 Sort by `debt_minutes / number_of_corrections_needed` ratio:
 
 ``` r
+
 debt <- debt_index(res)
 
 # Display categories with the most debt
@@ -116,6 +125,7 @@ For an existing project with a lot of debt, adopt an incremental
 approach:
 
 ``` r
+
 # Week 1: fix lint errors (highest impact)
 # Week 2: add tests to increase coverage
 # Week 3: reformat the code (styler::style_dir)
@@ -137,6 +147,7 @@ Use
 to see exactly what changed between two analysis runs:
 
 ``` r
+
 baseline <- sonar_analyse(".")
 # ... make improvements ...
 current  <- sonar_analyse(".")
@@ -157,6 +168,7 @@ appends each analysis to a JSON history file, making it easy to monitor
 quality evolution across builds:
 
 ``` r
+
 res <- sonar_analyse(".")
 sonar_trend(res, file = "rsonar-history.json")
 ```

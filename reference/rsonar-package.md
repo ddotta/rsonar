@@ -21,3 +21,7 @@ Useful links:
 ## Author
 
 **Maintainer**: Damien Dotta <damien.dotta@live.fr>
+
+Authors:
+
+- Damien Dotta <damien.dotta@live.fr>

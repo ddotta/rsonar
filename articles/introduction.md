@@ -10,20 +10,21 @@ several disparate tools.
 
 `rsonar` bridges this gap by orchestrating the best R tools available:
 
-| Dimension       | Underlying tool                                                               | SonarQube equivalent       |
-|-----------------|-------------------------------------------------------------------------------|----------------------------|
-| Static analysis | `lintr`                                                                       | Issues (bugs, code smells) |
-| Code style      | `styler`                                                                      | Style violations           |
-| Test coverage   | `covr`                                                                        | Code coverage              |
-| Best practices  | `goodpractice`                                                                | Maintainability checks     |
-| Technical debt  | SQALE model                                                                   | Technical debt             |
-| Quality Gate    | [`quality_gate()`](https://ddotta.github.io/rsonar/reference/quality_gate.md) | Quality Gate               |
+| Dimension | Underlying tool | SonarQube equivalent |
+|----|----|----|
+| Static analysis | `lintr` | Issues (bugs, code smells) |
+| Code style | `styler` | Style violations |
+| Test coverage | `covr` | Code coverage |
+| Best practices | `goodpractice` | Maintainability checks |
+| Technical debt | SQALE model | Technical debt |
+| Quality Gate | [`quality_gate()`](https://ddotta.github.io/rsonar/reference/quality_gate.md) | Quality Gate |
 
 ------------------------------------------------------------------------
 
 ## Installation
 
 ``` r
+
 # From GitHub (recommended)
 remotes::install_github("ddotta/rsonar")
 ```
@@ -35,6 +36,7 @@ remotes::install_github("ddotta/rsonar")
 ### 1. Analyze a project
 
 ``` r
+
 library(rsonar)
 
 # Full analysis (from the root of an R package)
@@ -61,6 +63,7 @@ function:
 ### 2. View the console summary
 
 ``` r
+
 print(res)
 ```
 
@@ -69,6 +72,7 @@ print(res)
 For rapid local feedback during development (without CI):
 
 ``` r
+
 quality_score(".")
 ```
 
@@ -95,6 +99,7 @@ percentage score plus the SQALE rating.
 ### 3. Generate the HTML report
 
 ``` r
+
 sonar_report(res, output = "quality.html")
 ```
 
@@ -108,6 +113,7 @@ The HTML report contains:
 ### 4. Check the Quality Gate
 
 ``` r
+
 gate <- quality_gate(res,
   coverage_min     = 80,   # 80% minimum coverage
   lint_errors_max  = 0,    # 0 errors tolerated
@@ -126,6 +132,7 @@ print(gate)
 ### 5. Set up the project
 
 ``` r
+
 # Add the recommended rsonar .lintr
 use_rsonar_lintr()
 
@@ -143,6 +150,7 @@ use_rsonar_ci("github")
 `rsonar` also works on projects that are **not** R packages:
 
 ``` r
+
 res <- sonar_analyse(
   "path/to/project",
   include_coverage     = FALSE,  # no tests/
@@ -160,6 +168,7 @@ Use
 to compare two analyses and detect regressions:
 
 ``` r
+
 baseline <- sonar_analyse(".", include_coverage = FALSE)
 # ... make changes ...
 current  <- sonar_analyse(".", include_coverage = FALSE)
@@ -176,6 +185,7 @@ Use
 in your CI pipeline to build a history of quality metrics:
 
 ``` r
+
 res <- sonar_analyse(".")
 sonar_trend(res, file = "rsonar-history.json")
 ```
@@ -188,6 +198,7 @@ If your organization already uses SonarQube for other languages, you can
 inject `rsonar` results via the **Generic Issue Import**:
 
 ``` r
+
 export_sonar_json(res, "sonar-issues.json")
 ```
 
@@ -198,12 +209,14 @@ Then in `sonar-project.properties`:
 ## Export for GitHub Code Scanning (SARIF)
 
 ``` r
+
 export_sarif(res, "results.sarif")
 ```
 
 For GitLab CI with JUnit artifacts:
 
 ``` r
+
 export_junit(res, "junit-results.xml")
 ```
 

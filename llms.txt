@@ -15,38 +15,40 @@ illustrates some features of the rsonar package.
 
 It orchestrates four proven tools:
 
-| Tool                                                       | Role                                      |
-|------------------------------------------------------------|-------------------------------------------|
-| [lintr](https://lintr.r-lib.org/)                          | Static analysis — bugs, style, complexity |
-| [styler](https://styler.r-lib.org/)                        | Code formatting (tidyverse style guide)   |
-| [covr](https://covr.r-lib.org/)                            | Test coverage                             |
-| [goodpractice](http://mangothecat.github.io/goodpractice/) | R packaging best practices                |
+| Tool | Role |
+|----|----|
+| [lintr](https://lintr.r-lib.org/) | Static analysis — bugs, style, complexity |
+| [styler](https://styler.r-lib.org/) | Code formatting (tidyverse style guide) |
+| [covr](https://covr.r-lib.org/) | Test coverage |
+| [goodpractice](http://mangothecat.github.io/goodpractice/) | R packaging best practices |
 
 ## SonarQube → rsonar Analogies
 
-| SonarQube                  | rsonar                                                                        |
-|----------------------------|-------------------------------------------------------------------------------|
-| Issues (bugs, code smells) | lintr issues                                                                  |
-| Style violations           | styler violations                                                             |
-| Coverage                   | covr (line + branch)                                                          |
-| Maintainability rating     | [`debt_index()`](https://ddotta.github.io/rsonar/reference/debt_index.md)     |
-| Quality Gate               | [`quality_gate()`](https://ddotta.github.io/rsonar/reference/quality_gate.md) |
-| HTML report                | [`sonar_report()`](https://ddotta.github.io/rsonar/reference/sonar_report.md) |
-| Generic Issue Import       | SonarQube JSON export                                                         |
-| New Code analysis          | [`sonar_diff()`](https://ddotta.github.io/rsonar/reference/sonar_diff.md)     |
-| Project history            | [`sonar_trend()`](https://ddotta.github.io/rsonar/reference/sonar_trend.md)   |
-| SARIF integration          | [`export_sarif()`](https://ddotta.github.io/rsonar/reference/export_sarif.md) |
+| SonarQube | rsonar |
+|----|----|
+| Issues (bugs, code smells) | lintr issues |
+| Style violations | styler violations |
+| Coverage | covr (line + branch) |
+| Maintainability rating | [`debt_index()`](https://ddotta.github.io/rsonar/reference/debt_index.md) |
+| Quality Gate | [`quality_gate()`](https://ddotta.github.io/rsonar/reference/quality_gate.md) |
+| HTML report | [`sonar_report()`](https://ddotta.github.io/rsonar/reference/sonar_report.md) |
+| Generic Issue Import | SonarQube JSON export |
+| New Code analysis | [`sonar_diff()`](https://ddotta.github.io/rsonar/reference/sonar_diff.md) |
+| Project history | [`sonar_trend()`](https://ddotta.github.io/rsonar/reference/sonar_trend.md) |
+| SARIF integration | [`export_sarif()`](https://ddotta.github.io/rsonar/reference/export_sarif.md) |
 
 ## Installation
 
 ``` r
+
 # From GitHub
-remotes::install_github("SSM-Agriculture/rsonar")
+remotes::install_github("ddotta/rsonar")
 ```
 
 ## Quick Start
 
 ``` r
+
 library(rsonar)
 
 # Full analysis of an R package
@@ -91,6 +93,7 @@ SQALE rating.
 If you want instant feedback while coding (without CI), run:
 
 ``` r
+
 library(rsonar)
 
 # Fast local score (by default: no coverage/goodpractice for speed)
@@ -108,12 +111,12 @@ Typical output:
 ## Alternatives and Added Value
 
 See the [full
-documentation](https://SSM-Agriculture.github.io/rsonar/articles/alternatives.html).
+documentation](https://ddotta.github.io/rsonar/index.html).
 
 ## CI Integration
 
 See the [CI/CD
-examples](https://SSM-Agriculture.github.io/rsonar/articles/ci-integration.html).
+examples](https://ddotta.github.io/rsonar/articles/ci-integration.html).
 
 # Package index
 

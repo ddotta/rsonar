@@ -92,26 +92,26 @@ analysis**.
 
 ## Comparison table
 
-| Feature                         | rsonar | lintr alone | r-lib/actions | SonarQube +plugin |
-|---------------------------------|:------:|:-----------:|:-------------:|:-----------------:|
-| Static analysis                 |   ✅   |     ✅      |      ✅       |    ⚠️ limited     |
-| Style checking                  |   ✅   | ⚠️ partial  |      ✅       |        ❌         |
-| Test coverage                   |   ✅   |     ❌      |      ✅       |        ✅         |
-| Packaging best practices        |   ✅   |     ❌      |      ❌       |        ❌         |
-| **Interactive HTML report**     |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Technical debt (SQALE)**      |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Quality Gate**                |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Analysis comparison**         |   ✅   |     ❌      |      ❌       |        ✅         |
-| **SARIF export**                |   ✅   |     ❌      |      ❌       |        ❌         |
-| **Trend tracking**              |   ✅   |     ❌      |      ❌       |        ✅         |
-| **Quick IDE quality score (%)** |   ✅   |     ❌      |      ❌       |        ❌         |
-| R scripts (non-package)         |   ✅   |     ✅      |      ❌       |        ❌         |
-| Native GitLab CI                |   ✅   |  ⚠️ manual  |      ❌       |    ✅ (server)    |
-| Native GitHub Actions           |   ✅   |  ⚠️ manual  |      ✅       |    ✅ (server)    |
-| **SonarQube JSON export**       |   ✅   |     ❌      |      ❌       |        N/A        |
-| JUnit XML export                |   ✅   |     ❌      |      ✅       |        ✅         |
-| **Zero server required**        |   ✅   |     ✅      |      ✅       |        ❌         |
-| Pure R language                 |   ✅   |     ✅      |      ✅       |      ❌ Java      |
+| Feature | rsonar | lintr alone | r-lib/actions | SonarQube +plugin |
+|----|:--:|:--:|:--:|:--:|
+| Static analysis | ✅ | ✅ | ✅ | ⚠️ limited |
+| Style checking | ✅ | ⚠️ partial | ✅ | ❌ |
+| Test coverage | ✅ | ❌ | ✅ | ✅ |
+| Packaging best practices | ✅ | ❌ | ❌ | ❌ |
+| **Interactive HTML report** | ✅ | ❌ | ❌ | ✅ |
+| **Technical debt (SQALE)** | ✅ | ❌ | ❌ | ✅ |
+| **Quality Gate** | ✅ | ❌ | ❌ | ✅ |
+| **Analysis comparison** | ✅ | ❌ | ❌ | ✅ |
+| **SARIF export** | ✅ | ❌ | ❌ | ❌ |
+| **Trend tracking** | ✅ | ❌ | ❌ | ✅ |
+| **Quick IDE quality score (%)** | ✅ | ❌ | ❌ | ❌ |
+| R scripts (non-package) | ✅ | ✅ | ❌ | ❌ |
+| Native GitLab CI | ✅ | ⚠️ manual | ❌ | ✅ (server) |
+| Native GitHub Actions | ✅ | ⚠️ manual | ✅ | ✅ (server) |
+| **SonarQube JSON export** | ✅ | ❌ | ❌ | N/A |
+| JUnit XML export | ✅ | ❌ | ✅ | ✅ |
+| **Zero server required** | ✅ | ✅ | ✅ | ❌ |
+| Pure R language | ✅ | ✅ | ✅ | ❌ Java |
 
 ------------------------------------------------------------------------
 
@@ -140,7 +140,9 @@ database. It opens in the browser and can be archived as a CI artifact.
 The **SQALE model** (Software Quality Assessment based on Lifecycle
 Expectations) is the same used by SonarQube:
 
-$$\text{Rating} = f\left( \frac{\text{Debt (min)}}{\text{Base effort (min)}} \right)$$
+``` math
+\text{Rating} = f\left(\frac{\text{Debt (min)}}{\text{Base effort (min)}}\right)
+```
 
 Each category (lint errors, style, missing coverage…) contributes to a
 total debt in minutes, allowing you to **prioritize fixes**.
@@ -148,6 +150,7 @@ total debt in minutes, allowing you to **prioritize fixes**.
 ### 4. Quality Gate without SonarQube
 
 ``` r
+
 # Block CI if coverage drops below 80% or lint errors exist
 quality_gate(res,
   coverage_min    = 80,
@@ -189,6 +192,7 @@ gives developers an immediate percentage and rating directly in the IDE,
 without any server or CI workflow:
 
 ``` r
+
 quality_score(".")
 ```
 

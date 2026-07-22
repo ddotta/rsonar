@@ -31,6 +31,7 @@ include:
 Or copy the template into your project:
 
 ``` r
+
 library(rsonar)
 use_rsonar_ci("gitlab")
 ```
@@ -170,6 +171,7 @@ sonar-scan:
 ## GitHub Actions
 
 ``` r
+
 # Copy the workflow to .github/workflows/rsonar.yml
 use_rsonar_ci("github")
 ```
@@ -296,6 +298,7 @@ To make it easy to run locally before pushing:
 If you only want a quick local indicator in your IDE, run:
 
 ``` r
+
 library(rsonar)
 quality_score(".")
 ```
@@ -340,6 +343,7 @@ If your project already has many issues, don’t block on everything
 immediately:
 
 ``` r
+
 # Phase 1: observe without blocking
 quality_gate(res, lint_errors_max = Inf, style_issues_max = Inf,
              coverage_min = 0, fail_on_error = FALSE)

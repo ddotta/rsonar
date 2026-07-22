@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>rsonar — R Code Quality • rsonar</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="rsonar — R Code Quality">
 <meta name="description" content="SonarQube equivalent for R: static analysis, style, coverage, technical debt and Quality Gate in a single HTML report.
@@ -83,24 +83,24 @@
 <col width="50%">
 <col width="50%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>Tool</th>
 <th>Role</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><a href="https://lintr.r-lib.org/" class="external-link">lintr</a></td>
 <td>Static analysis — bugs, style, complexity</td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="https://styler.r-lib.org/" class="external-link">styler</a></td>
 <td>Code formatting (tidyverse style guide)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><a href="https://covr.r-lib.org/" class="external-link">covr</a></td>
 <td>Test coverage</td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="http://mangothecat.github.io/goodpractice/" class="external-link">goodpractice</a></td>
 <td>R packaging best practices</td>
 </tr>
@@ -111,48 +111,48 @@
 <h2 id="sonarqube--rsonar-analogies">SonarQube → rsonar Analogies<a class="anchor" aria-label="anchor" href="#sonarqube--rsonar-analogies"></a>
 </h2>
 <table class="table">
-<thead><tr class="header">
+<thead><tr>
 <th>SonarQube</th>
 <th>rsonar</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Issues (bugs, code smells)</td>
 <td>lintr issues</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Style violations</td>
 <td>styler violations</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Coverage</td>
 <td>covr (line + branch)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Maintainability rating</td>
 <td><code><a href="reference/debt_index.html">debt_index()</a></code></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Quality Gate</td>
 <td><code><a href="reference/quality_gate.html">quality_gate()</a></code></td>
 </tr>
-<tr class="even">
+<tr>
 <td>HTML report</td>
 <td><code><a href="reference/sonar_report.html">sonar_report()</a></code></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Generic Issue Import</td>
 <td>SonarQube JSON export</td>
 </tr>
-<tr class="even">
+<tr>
 <td>New Code analysis</td>
 <td><code><a href="reference/sonar_diff.html">sonar_diff()</a></code></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Project history</td>
 <td><code><a href="reference/sonar_trend.html">sonar_trend()</a></code></td>
 </tr>
-<tr class="even">
+<tr>
 <td>SARIF integration</td>
 <td><code><a href="reference/export_sarif.html">export_sarif()</a></code></td>
 </tr>
@@ -164,7 +164,7 @@
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># From GitHub</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"SSM-Agriculture/rsonar"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ddotta/rsonar"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
@@ -225,12 +225,12 @@
 <div class="section level2">
 <h2 id="alternatives-and-added-value">Alternatives and Added Value<a class="anchor" aria-label="anchor" href="#alternatives-and-added-value"></a>
 </h2>
-<p>See the <a href="https://SSM-Agriculture.github.io/rsonar/articles/alternatives.html" class="external-link">full documentation</a>.</p>
+<p>See the <a href="https://ddotta.github.io/rsonar/index.html">full documentation</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="ci-integration">CI Integration<a class="anchor" aria-label="anchor" href="#ci-integration"></a>
 </h2>
-<p>See the <a href="https://SSM-Agriculture.github.io/rsonar/articles/ci-integration.html" class="external-link">CI/CD examples</a>.</p>
+<p>See the <a href="https://ddotta.github.io/rsonar/articles/ci-integration.html">CI/CD examples</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -283,7 +283,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
