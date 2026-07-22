@@ -82,7 +82,7 @@ export_junit <- function(x, output = "rsonar-junit.xml") {
 
   testcases <- character(0)
 
-  # Lint issues → failures
+  # Lint issues -> failures
   for (issue in x$lint) {
     rel_path <- fs::path_rel(issue$filename, x$path)
     testcases <- c(testcases, glue::glue(
@@ -94,7 +94,7 @@ export_junit <- function(x, output = "rsonar-junit.xml") {
     ))
   }
 
-  # Style issues → failures
+  # Style issues -> failures
   if (!is.null(x$style)) {
     bad_files <- x$style[!is.na(x$style$changed) & x$style$changed, "file"]
     for (f in bad_files) {

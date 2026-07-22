@@ -208,7 +208,7 @@ sonar_report <- function(
 
     <!-- Static analysis -->
     <section>
-      <h2>&#128270; Static Analysis — lintr ({m$n_lint_issues} issue(s))</h2>
+      <h2>&#128270; Static Analysis - lintr ({m$n_lint_issues} issue(s))</h2>
       <table>
         <thead><tr><th>Severity</th><th>File</th><th>Line</th><th>Message</th><th>Rule</th></tr></thead>
         <tbody>{lint_rows}</tbody>
@@ -217,7 +217,7 @@ sonar_report <- function(
 
     <!-- Style -->
     <section>
-      <h2>&#9998; Code Style — styler ({m$n_style_issues} non-compliant file(s))</h2>
+      <h2>&#9998; Code Style - styler ({m$n_style_issues} non-compliant file(s))</h2>
       <table>
         <thead><tr><th>File</th><th>Status</th></tr></thead>
         <tbody>{style_rows}</tbody>

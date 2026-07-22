@@ -521,7 +521,7 @@ install_air <- function(version = "latest", force = FALSE) {
 #' @return `x` invisibly.
 #' @export
 print.rsonar_fix <- function(x, ...) {
-  mode <- if (x$dry_run) " (dry-run — no files modified)" else ""
+  mode <- if (x$dry_run) " (dry-run - no files modified)" else ""
   cli::cli_h2("rsonar Fix Report{mode}")
 
   cli::cli_inform(c(
