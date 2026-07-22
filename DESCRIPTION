@@ -30,7 +30,8 @@ Suggests:
     knitr,
     rmarkdown,
     pkgdown,
-    htmltools
+    htmltools,
+    air (>= 0.1.0)
 VignetteBuilder: knitr
 URL: https://ddotta.github.io/rsonar/, https://github.com/ddotta/rsonar
 BugReports: https://github.com/ddotta/rsonar/issues

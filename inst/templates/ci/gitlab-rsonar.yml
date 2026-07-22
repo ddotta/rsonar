@@ -28,6 +28,7 @@ stages:
   - install
   - lint
   - style
+  - fix
   - coverage
   - quality_gate
   - report
@@ -94,6 +95,28 @@ rsonar-style:
       }
       cat('Style OK\n')
       "
+
+# ---- Auto-fix with air (optional, manual trigger) --------------------------
+rsonar-fix:
+  stage: fix
+  needs: [install-deps]
+  when: manual
+  allow_failure: true
+  script:
+    - |
+      # Install air formatter
+      R -q -e "rsonar::install_air()"
+      export PATH="$HOME/.local/bin:$PATH"
+      # Run auto-fix and create Merge Request
+      R -q -e "
+      library(rsonar)
+      fix <- sonar_fix('.', create_mr = TRUE)
+      writeLines(capture.output(print(fix)), 'rsonar-fix-results.txt')
+      "
+  artifacts:
+    paths:
+      - rsonar-fix-results.txt
+    expire_in: 1 week
 
 # ---- Test coverage (covr) -------------------------------------------------
 rsonar-coverage:
