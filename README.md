@@ -42,7 +42,7 @@ It orchestrates four proven tools:
 
 ```r
 # From GitHub
-remotes::install_github("SSM-Agriculture/rsonar")
+remotes::install_github("ddotta/rsonar")
 ```
 
 ## Quick Start
@@ -109,8 +109,8 @@ Typical output:
 
 ## Alternatives and Added Value
 
-See the [full documentation](https://SSM-Agriculture.github.io/rsonar/articles/alternatives.html).
+See the [full documentation](https://ddotta.github.io/rsonar/index.html).
 
 ## CI Integration
 
-See the [CI/CD examples](https://SSM-Agriculture.github.io/rsonar/articles/ci-integration.html).
+See the [CI/CD examples](https://ddotta.github.io/rsonar/articles/ci-integration.html).
