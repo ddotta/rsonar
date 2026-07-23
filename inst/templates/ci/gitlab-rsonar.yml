@@ -97,11 +97,28 @@ rsonar-style:
       "
 
 # ---- Auto-fix with air (optional, manual trigger) --------------------------
+#
+# This job installs air, formats all R files, and opens a GitLab
+# Merge Request. It uses PROJECT_TOKEN (Project Access Token) with
+# oauth2 authentication to push the fix branch.
+#
+# Prerequisites:
+#   - GitLab > Settings > CI/CD > Variables : PROJECT_TOKEN
+#     (Project Access Token with write_repository scope)
 rsonar-fix:
   stage: fix
   needs: [install-deps]
   when: manual
   allow_failure: true
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
+  before_script:
+    - |
+      git config --global user.name "rsonar CI"
+      git config --global user.email "rsonar@ci.local"
+      git remote set-url origin "https://oauth2:${PROJECT_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+      echo "Git remote configured for push."
   script:
     - |
       # Install air formatter
