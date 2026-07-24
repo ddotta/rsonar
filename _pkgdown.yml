@@ -39,6 +39,8 @@ navbar:
         - text: "---"
         - text: "Auto-Fix with sonar_fix()"
           href: articles/auto-fix.html
+        - text: "GitLab Auto-Fix"
+          href: articles/gitlab-autofix.html
         - text: "---"
         - text: "Alternatives and Added Value"
           href: articles/alternatives.html
@@ -67,6 +69,7 @@ reference:
     desc: "Automatic code formatting with air"
     contents:
       - sonar_fix
+      - sonar_autofix
       - install_air
   - title: "Reports and Exports"
     desc: "Report generation"
