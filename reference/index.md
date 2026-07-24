@@ -32,7 +32,9 @@ Track quality over time
 Automatic code formatting with air
 
 - [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md)
-  : Auto-Fix Code Quality Issues with air
+  : Auto-Fix R Code Quality Issues
+- [`sonar_autofix()`](https://ddotta.github.io/rsonar/reference/sonar_autofix.md)
+  : Auto-Fix and Create Merge/Pull Request (GitLab or GitHub)
 - [`install_air()`](https://ddotta.github.io/rsonar/reference/install_air.md)
   : Install air R Code Formatter
 
@@ -70,7 +72,7 @@ Initialization and templates
   : Print an rsonar_gate Object
 - [`print(`*`<rsonar_diff>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_diff.md)
   : Print an rsonar_diff Object
-- [`print(`*`<rsonar_fix>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_fix.md)
-  : Print an rsonar_fix Object
+- [`print(`*`<sonar_fix>`*`)`](https://ddotta.github.io/rsonar/reference/print.sonar_fix.md)
+  : Print a sonar_fix Object
 - [`summary(`*`<rsonar_result>`*`)`](https://ddotta.github.io/rsonar/reference/summary.rsonar_result.md)
   : Summarise an rsonar_result Object

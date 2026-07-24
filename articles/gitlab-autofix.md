@@ -1,0 +1,212 @@
+# GitLab & GitHub Auto-Fix with sonar_autofix()
+
+## Overview
+
+[`sonar_autofix()`](https://ddotta.github.io/rsonar/reference/sonar_autofix.md)
+is a **generic function** for automatic code fixes with Git platform
+integration. It runs
+[`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md)
+to correct code issues, then commits changes and creates a Merge Request
+(GitLab) or Pull Request (GitHub).
+
+The function auto-detects the CI environment:
+
+| Platform | Detection                          | Output                    |
+|----------|------------------------------------|---------------------------|
+| GitLab   | `GITLAB_CI` or `CI_PROJECT_ID` set | Merge Request via API v4  |
+| GitHub   | `GITHUB_ACTIONS` set               | Pull Request via `gh` CLI |
+
+## Quick start
+
+### One-liner (auto-detect)
+
+``` r
+
+library(rsonar)
+sonar_autofix()
+```
+
+The function automatically detects whether you’re in GitLab CI or GitHub
+Actions.
+
+### GitLab CI
+
+``` r
+
+sonar_autofix(provider = "gitlab")
+```
+
+Requires `GITLAB_TOKEN` or `CI_JOB_TOKEN` environment variable.
+
+### GitHub Actions
+
+``` r
+
+sonar_autofix(provider = "github")
+```
+
+Requires `gh` CLI installed and authenticated, or `GITHUB_TOKEN` set.
+
+## CI pipeline examples
+
+### GitLab CI
+
+``` yaml
+rsonar-autofix:
+  stage: fix
+  when: manual
+  script:
+    - R -q -e "library(rsonar); sonar_autofix()"
+  artifacts:
+    paths:
+      - sonar-fixes.json
+```
+
+### GitHub Actions
+
+``` yaml
+rsonar-autofix:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: r-lib/actions/setup-r@v2
+    - name: Auto-fix
+      run: |
+        R -q -e "remotes::install_github('ddotta/rsonar')"
+        R -q -e "library(rsonar); sonar_autofix()"
+```
+
+## Parameters
+
+### Provider selection
+
+``` r
+
+# Auto-detect
+sonar_autofix(provider = "auto")
+
+# Force GitLab
+sonar_autofix(provider = "gitlab")
+
+# Force GitHub
+sonar_autofix(provider = "github")
+```
+
+### Branch and target
+
+``` r
+
+sonar_autofix(
+  branch = "auto/style-fix",
+  target_branch = "develop"
+)
+```
+
+### Fix categories
+
+``` r
+
+# Only formatting and spacing
+sonar_autofix(fixes = c("styler", "spacing", "cleanup"))
+```
+
+### Dry-run mode
+
+``` r
+
+# Simulate without modifying anything
+sonar_autofix(dry_run = TRUE)
+```
+
+## Auto-detected CI variables
+
+### GitLab
+
+| Variable            | Used for                  |
+|---------------------|---------------------------|
+| `GITLAB_CI`         | Detect GitLab environment |
+| `CI_PROJECT_ID`     | Project ID for API        |
+| `CI_SERVER_URL`     | GitLab server URL         |
+| `CI_API_V4_URL`     | API v4 endpoint           |
+| `CI_DEFAULT_BRANCH` | Target branch             |
+
+### GitHub
+
+| Variable          | Used for                   |
+|-------------------|----------------------------|
+| `GITHUB_ACTIONS`  | Detect GitHub environment  |
+| `GITHUB_BASE_REF` | Target branch              |
+| `GITHUB_TOKEN`    | API authentication         |
+| `GITHUB_RUN_ID`   | Included in PR description |
+
+## Token authentication
+
+### GitLab
+
+Token resolution order: 1. `GITLAB_TOKEN` environment variable 2.
+`PERSONAL_ACCESS_TOKEN` environment variable 3. `CI_JOB_TOKEN` (built-in
+GitLab CI token)
+
+Setting up a Project Access Token: 1.
+`Settings > Access Tokens > Add new token` 2. Token name:
+`rsonar-autofix` 3. Role: `Maintainer` 4. Scopes: `write_repository`,
+`api` 5. Add to `Settings > CI/CD > Variables` as `GITLAB_TOKEN`
+(masked)
+
+### GitHub
+
+Token resolution order: 1. `GITHUB_TOKEN` environment variable (Actions
+built-in) 2. `gh` CLI authentication (if installed)
+
+## How it works
+
+    sonar_autofix(provider = "gitlab")
+       │
+       ├── 1. sonar_fix() → auto-correct code (16 fix categories)
+       ├── 2. git checkout -b auto/rsonar-fix
+       ├── 3. git add + git commit
+       ├── 4. git push -f origin auto/rsonar-fix
+       └── 5. GitLab API → POST /merge_requests
+            or
+            gh pr create → Pull Request
+
+## Architecture
+
+The function uses a common engine for Git operations and
+platform-specific connectors:
+
+- `.run_git_operations()` — Common: checkout, commit, push
+- `.create_gitlab_mr()` — GitLab: Merge Request via API v4
+- `.create_github_pr()` — GitHub: Pull Request via `gh` CLI
+
+## Report
+
+A JSON report is generated at `sonar-fixes.json`:
+
+``` json
+{
+  "files": {
+    "scanned": 42,
+    "modified": 18
+  },
+  "fixes": {
+    "styler": 205,
+    "spacing": 81,
+    "true_false": 9
+  },
+  "provider": "gitlab",
+  "branch": "auto/rsonar-fix"
+}
+```
+
+## See also
+
+- [Auto-Fix with
+  sonar_fix()](https://ddotta.github.io/rsonar/articles/auto-fix.md) for
+  detailed fix categories
+- [CI/CD
+  Integration](https://ddotta.github.io/rsonar/articles/ci-integration.md)
+  for general pipeline configuration
+- [Introduction to
+  rsonar](https://ddotta.github.io/rsonar/articles/introduction.md) for
+  a general overview

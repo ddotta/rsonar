@@ -1,21 +1,25 @@
-# Auto-Fix Code Quality Issues with air
+# Auto-Fix R Code Quality Issues
 
-Runs `air` (Posit's R code formatter) on R files to automatically fix
-code style and lint issues. Optionally creates a git branch and pushes
-changes for review via Merge Request (GitLab) or Pull Request (GitHub).
+Automatically fixes common R code quality issues across multiple
+categories: formatting, trivial transformations, cleanup,
+simplifications, pipes, namespace usage, dead code detection, and more.
 
 ## Usage
 
 ``` r
 sonar_fix(
   path = ".",
-  files = NULL,
-  create_mr = FALSE,
-  branch_name = NULL,
-  commit_message = "style: auto-format code with air via rsonar",
-  mr_title = "Auto-fix: code style improvements via rsonar",
-  dry_run = FALSE,
-  verbose = TRUE
+  include = "\\.[Rr]$",
+  exclude = c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules"),
+  fixes = "all",
+  formatter = c("styler", "air"),
+  dry_run = TRUE,
+  backup = FALSE,
+  parallel = TRUE,
+  n_cores = parallel::detectCores(),
+  report = TRUE,
+  report_file = "sonar-fixes.json",
+  verbose = interactive()
 )
 ```
 
@@ -23,67 +27,91 @@ sonar_fix(
 
 - path:
 
-  Path to the R project or directory. Default current directory.
+  Path to the R project or directory. Default `"."`.
 
-- files:
+- include:
 
-  Character vector of specific R files to fix. If `NULL` (default), all
-  R files in `path` are processed.
+  Glob pattern for files to include. Default `"\\\\.\[Rr\]$"`.
 
-- create_mr:
+- exclude:
 
-  Logical. If `TRUE`, attempts to create a git branch, commit changes,
-  push, and open a Merge Request (GitLab CI) or Pull Request (GitHub
-  Actions). Requires `git` and appropriate CI environment variables.
-  Default `FALSE`.
+  Character vector of directories or patterns to exclude. Default
+  `c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules")`.
 
-- branch_name:
+- fixes:
 
-  Name of the branch to create. If `NULL`, an automatic name
-  `"rsonar/auto-fix-{timestamp}"` is generated. Default `NULL`.
+  Character vector of fix categories to apply, or `"all"` for all
+  categories. Available categories are: `"styler"`, `"spacing"`,
+  `"true_false"`, `"null"`, `"commas"`, `"parens"`, `"cleanup"`,
+  `"simplify"`, `"pipes"`, `"magrittr"`, `"namespace"`, `"library"`,
+  `"dead_code"`, `"return"`, `"assignment"`, `"comments"`. See details.
+  Default `"all"`.
 
-- commit_message:
+- formatter:
 
-  Commit message. Default
-  `"style: auto-format code with air via rsonar"`.
-
-- mr_title:
-
-  Title of the MR / PR. Default
-  `"Auto-fix: code style improvements via rsonar"`.
+  Character vector of formatters to use for code style. Options are
+  `"styler"` (default, uses tidyverse style) or `"air"` (Posit's fast
+  formatter). Default `c("styler")`.
 
 - dry_run:
 
   Logical. If `TRUE`, only check what would be changed without modifying
-  files (uses `air format --check`). Default `FALSE`.
+  files. Default `TRUE`.
+
+- backup:
+
+  Logical. If `TRUE`, create `.bak` copies of files before modifying
+  them. Default `FALSE`.
+
+- parallel:
+
+  Logical. Use parallel processing for multiple files. Default `TRUE`.
+
+- n_cores:
+
+  Number of cores for parallel processing. Default
+  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html).
+
+- report:
+
+  Logical. Generate a JSON report file. Default `TRUE`.
+
+- report_file:
+
+  Path to the JSON report. Default `"sonar-fixes.json"`.
 
 - verbose:
 
-  Logical. Show progress and result summary. Default `TRUE`.
+  Logical. Show progress and result summary. Default
+  [`interactive()`](https://rdrr.io/r/base/interactive.html).
 
 ## Value
 
-An object of class `rsonar_fix` containing:
+An object of class `sonar_fix` containing:
 
-- `files_changed`:
+- `files_scanned`:
 
-  Character vector of modified file paths
+  Total number of R files examined
 
-- `diff_summary`:
+- `files_modified`:
 
-  Summary string from air output
+  Number of files that were actually modified
 
-- `branch`:
+- `fixes_applied`:
 
-  Name of the created branch (if `create_mr = TRUE`)
+  Named list with counts of each fix type applied
 
-- `mr_url`:
+- `fixes_skipped`:
 
-  URL of the created MR/PR (if applicable)
+  Named list of fix types that were skipped
 
-- `dry_run`:
+- `elapsed`:
 
-  Whether dry-run mode was used
+  Duration of the fix run
+
+- `report`:
+
+  Console-friendly summary text
 
 - `path`:
 
@@ -91,18 +119,82 @@ An object of class `rsonar_fix` containing:
 
 - `timestamp`:
 
-  Execution timestamp
+  Execution date/time
 
 ## Details
 
-`air` is a fast, opinionated R code formatter developed by Posit. It
-reformats R code according to modern style conventions. See
-<https://github.com/posit-dev/air> for installation instructions.
+Unlike
+[`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)
+which is read-only, `sonar_fix()` **modifies files** in the project.
+Always run with `dry_run = TRUE` first (default) to preview changes
+before applying them.
+
+## Fix categories
+
+**Formatting** (`"styler"` or `"air"`): Indentation, spacing,
+parentheses, alignment, line breaks, pipe formatting, braces, blank
+lines. Equivalent to
+[`styler::style_dir()`](https://styler.r-lib.org/reference/style_dir.html)
+or `air format`.
+
+**Spacing** (`"spacing"`): Fix missing spaces around operators, commas,
+and assignments. Example: `x<-1` → `x <- 1`.
+
+**TRUE/FALSE** (`"true_false"`): Replace `T`/`F` with `TRUE`/`FALSE`.
+
+**NULL** (`"null"`): Replace `x=NULL` with `x <- NULL`.
+
+**Commas** (`"commas"`): Add spaces after commas. Example: `c(1,2,3)` →
+`c(1, 2, 3)`.
+
+**Parentheses** (`"parens"`): Remove unnecessary parentheses. Example:
+`return((x))` → `return(x)`.
+
+**Cleanup** (`"cleanup"`): Remove double comment lines (`#####`), empty
+comment blocks, multiple blank lines, trailing whitespace, ensure single
+trailing newline.
+
+**Simplify** (`"simplify"`): Simplify boolean expressions. Example:
+`if(x==TRUE)` → `if(x)`, `length(x)==0` → `!length(x)`.
+
+**Pipes** (`"pipes"`): Convert `%>%` to `|>` (native pipe). Example:
+`x %>% f()` → `x |> f()`.
+
+**Magrittr** (`"magrittr"`): Convert assignment pipes `%<>%` to
+equivalent base R.
+
+**Namespace** (`"namespace"`): Convert
+[`library(x)`](https://rdrr.io/r/base/library.html) + `f()` to `x::f()`.
+
+**Library** (`"library"`): Detect unused
+[`library()`](https://rdrr.io/r/base/library.html) calls (report only,
+not applied automatically).
+
+**Dead code** (`"dead_code"`): Remove expressions without effect (e.g.
+`1+1` standalone). Default: report only.
+
+**Return** (`"return"`): Fix formatting of
+[`return()`](https://rdrr.io/r/base/function.html) calls. Example:
+`return(x)` without unnecessary line breaks.
+
+**Assignment** (`"assignment"`): Convert `=` to `<-` outside of function
+calls.
+
+**Comments** (`"comments"`): Standardize long comment separators.
+Example: `##########` → `#----------`.
+
+## Corrections NOT applied automatically
+
+The following are never auto-fixed (remain in
+[`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)):
+unused variables, business logic changes, renaming, function removal,
+API changes, type changes, algorithm simplification, cyclomatic
+complexity.
 
 ## See also
 
 [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)
-for code quality analysis,
+for read-only analysis,
 [`install_air()`](https://ddotta.github.io/rsonar/reference/install_air.md)
 to install the air formatter.
 
@@ -110,17 +202,20 @@ to install the air formatter.
 
 ``` r
 if (FALSE) { # \dontrun{
-# Check what would be changed (no file modification)
+# Preview changes (no files modified)
 fix <- sonar_fix(".", dry_run = TRUE)
 print(fix)
 
-# Auto-fix all R files in the current project
-fix <- sonar_fix(".")
+# Apply all fixes
+fix <- sonar_fix(".", dry_run = FALSE)
 
-# Fix specific files only
-fix <- sonar_fix(".", files = c("R/analyse.R", "R/export.R"))
+# Apply only formatting and spacing fixes
+fix <- sonar_fix(".", fixes = c("spacing", "styler"))
 
-# Auto-fix and create a Merge Request (in GitLab CI)
-fix <- sonar_fix(".", create_mr = TRUE)
+# Use air formatter instead of styler
+fix <- sonar_fix(".", formatter = "air")
+
+# Backup files before modifying
+fix <- sonar_fix(".", backup = TRUE, dry_run = FALSE)
 } # }
 ```

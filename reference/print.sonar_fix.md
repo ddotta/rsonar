@@ -1,11 +1,11 @@
-# Print an rsonar_fix Object
+# Print a sonar_fix Object
 
-Print an rsonar_fix Object
+Print a sonar_fix Object
 
 ## Usage
 
 ``` r
-# S3 method for class 'rsonar_fix'
+# S3 method for class 'sonar_fix'
 print(x, ...)
 ```
 
@@ -13,7 +13,7 @@ print(x, ...)
 
 - x:
 
-  An `rsonar_fix` object returned by
+  A `sonar_fix` object returned by
   [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md).
 
 - ...:
