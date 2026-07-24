@@ -37,6 +37,9 @@ navbar:
         - text: "Technical Debt"
           href: articles/technical-debt.html
         - text: "---"
+        - text: "Auto-Fix with sonar_fix()"
+          href: articles/auto-fix.html
+        - text: "---"
         - text: "Alternatives and Added Value"
           href: articles/alternatives.html
     github:
@@ -85,7 +88,7 @@ reference:
       - print.rsonar_debt
       - print.rsonar_gate
       - print.rsonar_diff
-      - print.rsonar_fix
+      - print.sonar_fix
       - summary.rsonar_result
 
 news:

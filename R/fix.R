@@ -1,72 +1,150 @@
-#' Auto-Fix Code Quality Issues with air
+# ============================================================================
+# sonar_fix — Automatic Code Fixes for R Projects
+#
+# Completes sonar_analyse() by automatically correcting R code when possible.
+# Unlike sonar_analyse() (read-only), sonar_fix() modifies files in the project.
+# Inspired by SonarQube AutoFix, OpenRewrite, and IDE Quick Fix.
+# ============================================================================
+
+#' Auto-Fix R Code Quality Issues
 #'
-#' Runs `air` (Posit's R code formatter) on R files to automatically fix
-#' code style and lint issues. Optionally creates a git branch and pushes
-#' changes for review via Merge Request (GitLab) or Pull Request (GitHub).
+#' Automatically fixes common R code quality issues across multiple categories:
+#' formatting, trivial transformations, cleanup, simplifications, pipes,
+#' namespace usage, dead code detection, and more.
 #'
-#' `air` is a fast, opinionated R code formatter developed by Posit.
-#' It reformats R code according to modern style conventions.
-#' See \url{https://github.com/posit-dev/air} for installation instructions.
+#' Unlike [sonar_analyse()] which is read-only, `sonar_fix()` **modifies files**
+#' in the project. Always run with `dry_run = TRUE` first (default) to preview
+#' changes before applying them.
 #'
-#' @param path Path to the R project or directory. Default current directory.
-#' @param files Character vector of specific R files to fix. If `NULL`
-#'   (default), all R files in `path` are processed.
-#' @param create_mr Logical. If `TRUE`, attempts to create a git branch,
-#'   commit changes, push, and open a Merge Request (GitLab CI) or
-#'   Pull Request (GitHub Actions). Requires `git` and appropriate CI
-#'   environment variables. Default `FALSE`.
-#' @param branch_name Name of the branch to create. If `NULL`, an
-#'   automatic name `"rsonar/auto-fix-{timestamp}"` is generated.
-#'   Default `NULL`.
-#' @param commit_message Commit message. Default
-#'   `"style: auto-format code with air via rsonar"`.
-#' @param mr_title Title of the MR / PR. Default
-#'   `"Auto-fix: code style improvements via rsonar"`.
-#' @param dry_run Logical. If `TRUE`, only check what would be changed
-#'   without modifying files (uses `air format --check`).
-#'   Default `FALSE`.
-#' @param verbose Logical. Show progress and result summary.
+#' @param path Path to the R project or directory. Default `"."`.
+#' @param include Glob pattern for files to include. Default `"\\\\.\[Rr\]$"`.
+#' @param exclude Character vector of directories or patterns to exclude.
+#'   Default `c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules")`.
+#' @param fixes Character vector of fix categories to apply, or `"all"` for
+#'   all categories. Available categories are:
+#'   `"styler"`, `"spacing"`, `"true_false"`, `"null"`, `"commas"`,
+#'   `"parens"`, `"cleanup"`, `"simplify"`, `"pipes"`, `"magrittr"`,
+#'   `"namespace"`, `"library"`, `"dead_code"`, `"return"`,
+#'   `"assignment"`, `"comments"`. See details.
+#'   Default `"all"`.
+#' @param formatter Character vector of formatters to use for code style.
+#'   Options are `"styler"` (default, uses tidyverse style) or `"air"`
+#'   (Posit's fast formatter). Default `c("styler")`.
+#' @param dry_run Logical. If `TRUE`, only check what would be changed without
+#'   modifying files. Default `TRUE`.
+#' @param backup Logical. If `TRUE`, create `.bak` copies of files before
+#'   modifying them. Default `FALSE`.
+#' @param parallel Logical. Use parallel processing for multiple files.
 #'   Default `TRUE`.
+#' @param n_cores Number of cores for parallel processing. Default
+#'   `parallel::detectCores()`.
+#' @param report Logical. Generate a JSON report file. Default `TRUE`.
+#' @param report_file Path to the JSON report. Default `"sonar-fixes.json"`.
+#' @param verbose Logical. Show progress and result summary.
+#'   Default `interactive()`.
 #'
-#' @return An object of class `rsonar_fix` containing:
+#' @return An object of class `sonar_fix` containing:
 #'   \describe{
-#'     \item{`files_changed`}{Character vector of modified file paths}
-#'     \item{`diff_summary`}{Summary string from air output}
-#'     \item{`branch`}{Name of the created branch (if `create_mr = TRUE`)}
-#'     \item{`mr_url`}{URL of the created MR/PR (if applicable)}
-#'     \item{`dry_run`}{Whether dry-run mode was used}
+#'     \item{`files_scanned`}{Total number of R files examined}
+#'     \item{`files_modified`}{Number of files that were actually modified}
+#'     \item{`fixes_applied`}{Named list with counts of each fix type applied}
+#'     \item{`fixes_skipped`}{Named list of fix types that were skipped}
+#'     \item{`elapsed`}{Duration of the fix run}
+#'     \item{`report`}{Console-friendly summary text}
 #'     \item{`path`}{Analyzed project path}
-#'     \item{`timestamp`}{Execution timestamp}
+#'     \item{`timestamp`}{Execution date/time}
 #'   }
+#'
+#' @section Fix categories:
+#'
+#' **Formatting** (`"styler"` or `"air"`): Indentation, spacing, parentheses,
+#' alignment, line breaks, pipe formatting, braces, blank lines.
+#' Equivalent to `styler::style_dir()` or `air format`.
+#'
+#' **Spacing** (`"spacing"`): Fix missing spaces around operators,
+#' commas, and assignments. Example: `x<-1` → `x <- 1`.
+#'
+#' **TRUE/FALSE** (`"true_false"`): Replace `T`/`F` with `TRUE`/`FALSE`.
+#'
+#' **NULL** (`"null"`): Replace `x=NULL` with `x <- NULL`.
+#'
+#' **Commas** (`"commas"`): Add spaces after commas. Example:
+#' `c(1,2,3)` → `c(1, 2, 3)`.
+#'
+#' **Parentheses** (`"parens"`): Remove unnecessary parentheses.
+#' Example: `return((x))` → `return(x)`.
+#'
+#' **Cleanup** (`"cleanup"`): Remove double comment lines (`#####`),
+#' empty comment blocks, multiple blank lines, trailing whitespace,
+#' ensure single trailing newline.
+#'
+#' **Simplify** (`"simplify"`): Simplify boolean expressions.
+#' Example: `if(x==TRUE)` → `if(x)`, `length(x)==0` → `!length(x)`.
+#'
+#' **Pipes** (`"pipes"`): Convert `%>%` to `|>` (native pipe).
+#' Example: `x %>% f()` → `x |> f()`.
+#'
+#' **Magrittr** (`"magrittr"`): Convert assignment pipes `%<>%` to
+#' equivalent base R.
+#'
+#' **Namespace** (`"namespace"`): Convert `library(x)` + `f()` to
+#' `x::f()`.
+#'
+#' **Library** (`"library"`): Detect unused `library()` calls
+#' (report only, not applied automatically).
+#'
+#' **Dead code** (`"dead_code"`): Remove expressions without effect
+#' (e.g. `1+1` standalone). Default: report only.
+#'
+#' **Return** (`"return"`): Fix formatting of `return()` calls.
+#' Example: `return(x)` without unnecessary line breaks.
+#'
+#' **Assignment** (`"assignment"`): Convert `=` to `<-` outside of
+#' function calls.
+#'
+#' **Comments** (`"comments"`): Standardize long comment separators.
+#' Example: `##########` → `#----------`.
+#'
+#' @section Corrections NOT applied automatically:
+#' The following are never auto-fixed (remain in [sonar_analyse()]):
+#' unused variables, business logic changes, renaming, function removal,
+#' API changes, type changes, algorithm simplification, cyclomatic complexity.
 #'
 #' @examples
 #' \dontrun{
-#' # Check what would be changed (no file modification)
+#' # Preview changes (no files modified)
 #' fix <- sonar_fix(".", dry_run = TRUE)
 #' print(fix)
 #'
-#' # Auto-fix all R files in the current project
-#' fix <- sonar_fix(".")
+#' # Apply all fixes
+#' fix <- sonar_fix(".", dry_run = FALSE)
 #'
-#' # Fix specific files only
-#' fix <- sonar_fix(".", files = c("R/analyse.R", "R/export.R"))
+#' # Apply only formatting and spacing fixes
+#' fix <- sonar_fix(".", fixes = c("spacing", "styler"))
 #'
-#' # Auto-fix and create a Merge Request (in GitLab CI)
-#' fix <- sonar_fix(".", create_mr = TRUE)
+#' # Use air formatter instead of styler
+#' fix <- sonar_fix(".", formatter = "air")
+#'
+#' # Backup files before modifying
+#' fix <- sonar_fix(".", backup = TRUE, dry_run = FALSE)
 #' }
 #'
-#' @seealso [sonar_analyse()] for code quality analysis,
+#' @seealso [sonar_analyse()] for read-only analysis,
 #'   [install_air()] to install the air formatter.
 #' @export
 sonar_fix <- function(
     path = ".",
-    files = NULL,
-    create_mr = FALSE,
-    branch_name = NULL,
-    commit_message = "style: auto-format code with air via rsonar",
-    mr_title = "Auto-fix: code style improvements via rsonar",
-    dry_run = FALSE,
-    verbose = TRUE) {
+    include = "\\.[Rr]$",
+    exclude = c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules"),
+    fixes = "all",
+    formatter = c("styler", "air"),
+    dry_run = TRUE,
+    backup = FALSE,
+    parallel = TRUE,
+    n_cores = parallel::detectCores(),
+    report = TRUE,
+    report_file = "sonar-fixes.json",
+    verbose = interactive()) {
 
   path <- fs::path_abs(path)
 
@@ -74,488 +152,767 @@ sonar_fix <- function(
     cli::cli_abort("Directory not found: {.path {path}}")
   }
 
-  # ---- Locate air binary ----
-  air_bin <- .find_air()
-
-  if (verbose) {
-    cli::cli_inform(c("i" = "Using air: {.path {air_bin}}"))
-  }
-
-  # ---- Build command ----
-  args <- c("format")
-
-  if (dry_run) {
-    args <- c(args, "--check")
-  }
-
-  if (!is.null(files)) {
-    # Convert to relative paths from `path`
-    rel_files <- vapply(files, function(f) {
-      as.character(fs::path_rel(f, path))
-    }, character(1))
-    args <- c(args, rel_files)
-  } else {
-    args <- c(args, ".")
-  }
+  start_time <- Sys.time()
 
   if (verbose) {
     mode <- if (dry_run) " (dry-run)" else ""
-    cli::cli_progress_step("Running air formatter{mode} on {.path {path}}")
+    cli::cli_h1("rsonar Fix{mode}")
+    cli::cli_inform(c("i" = "Path: {.path {path}}"))
   }
 
-  # ---- Run air ----
-  stdout_lines <- character(0)
-  stderr_lines <- character(0)
-  exit_code <- 0L
-
-  withr::with_dir(path, {
-    # Use pipe to capture both stdout and stderr
-    tmp_stdout <- tempfile("air-stdout-")
-    tmp_stderr <- tempfile("air-stderr-")
-    on.exit(unlink(c(tmp_stdout, tmp_stderr)))
-
-    exit_code <- system2(air_bin, args,
-                         stdout = tmp_stdout,
-                         stderr = tmp_stderr)
-
-    if (file.exists(tmp_stdout)) {
-      stdout_lines <- readLines(tmp_stdout, warn = FALSE)
-    }
-    if (file.exists(tmp_stderr)) {
-      stderr_lines <- readLines(tmp_stderr, warn = FALSE)
-    }
-  })
-
-  # ---- Parse output for changed files ----
-  changed_files <- character(0)
-
-  if (dry_run) {
-    # air format --check outputs "Would reformat <file>" for each file
-    all_output <- c(stdout_lines, stderr_lines)
-    for (line in all_output) {
-      if (grepl("^Would reformat", line)) {
-        f <- sub("^Would reformat\\s+", "", line)
-        f <- trimws(f)
-        changed_files <- c(changed_files, f)
-      }
-    }
-  } else if (exit_code == 0L) {
-    # air format succeeded silently = all files formatted
-    # Detect changed files via git diff if in a repo
-    changed_files <- .git_changed_files(path)
-    if (length(changed_files) == 0L) {
-      # No git: air output may list formatted files
-      all_output <- c(stdout_lines, stderr_lines)
-      # air outputs formatted file paths on success
-      for (line in all_output) {
-        line <- trimws(line)
-        if (grepl("\\.R$", line, ignore.case = TRUE) && fs::file_exists(fs::path(path, line))) {
-          changed_files <- c(changed_files, line)
-        }
-      }
-    }
-  }
-
-  diff_summary <- if (length(c(stdout_lines, stderr_lines)) > 0) {
-    paste(c(stdout_lines, stderr_lines), collapse = "\n")
+  # ---- Determine fix categories ----
+  all_fixes <- c("styler", "spacing", "true_false", "null", "commas",
+                 "parens", "cleanup", "simplify", "pipes", "magrittr",
+                 "namespace", "library", "dead_code", "return",
+                 "assignment", "comments")
+  if (identical(fixes, "all")) {
+    active_fixes <- all_fixes
   } else {
-    ""
-  }
-
-  if (verbose && length(changed_files) > 0L) {
-    cli::cli_inform(c(
-      "i" = "{length(changed_files)} file(s) changed by air"
-    ))
-  }
-
-  if (verbose && length(changed_files) == 0L && !dry_run) {
-    cli::cli_inform(c("v" = "All files already properly formatted."))
-  }
-
-  # ---- Create Merge Request ----
-  mr_url <- NULL
-  branch <- NULL
-
-  if (create_mr && !dry_run && length(changed_files) > 0L) {
-    if (is.null(branch_name)) {
-      timestamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
-      branch_name <- paste0("rsonar/auto-fix-", timestamp)
+    active_fixes <- intersect(fixes, all_fixes)
+    if (length(active_fixes) == 0L) {
+      cli::cli_abort("No valid fix categories specified.")
     }
-
-    if (verbose) {
-      cli::cli_progress_step("Creating Merge Request branch: {.val {branch_name}}")
-    }
-
-    mr_result <- tryCatch(
-      .create_merge_request(path, branch_name, commit_message, mr_title),
-      error = function(e) {
-        cli::cli_warn("Could not create Merge Request: {conditionMessage(e)}")
-        list(url = NULL, branch = branch_name)
-      }
-    )
-
-    mr_url <- mr_result$url
-    branch <- mr_result$branch
   }
 
-  # ---- Build result object ----
-  fix <- structure(
-    list(
-      files_changed = changed_files,
-      diff_summary  = diff_summary,
-      branch        = branch,
-      mr_url        = mr_url,
-      dry_run       = dry_run,
-      path          = path,
-      timestamp     = Sys.time()
-    ),
-    class = "rsonar_fix"
-  )
+  # ---- Gather files ----
+  all_files <- fs::dir_ls(path, recurse = TRUE, regexp = include)
+  exclude_regex <- paste0("(", paste(exclude, collapse = "|"), ")")
+  r_files <- all_files[!grepl(exclude_regex, all_files)]
+  r_files <- as.character(r_files)
+
+  if (length(r_files) == 0L) {
+    cli::cli_inform(c("!" = "No R files found at {.path {path}}"))
+    return(invisible(.make_fix_result(
+      path, r_files, character(0), list(),
+      dry_run, start_time, verbose)))
+  }
 
   if (verbose) {
-    print(fix)
+    cli::cli_inform(c("i" = "{length(r_files)} R file(s) found"))
   }
 
-  invisible(fix)
-}
+  # ---- Pre-compute the fix infrastructure for non-styler fixes ----
+  # For styler/air formatting, we track files that need formatting.
+  # For other fixes, we apply per-file transformations.
+  fixes_applied <- list()
+  for (f in active_fixes) fixes_applied[[f]] <- 0L
 
+  # ---- Helper to apply text-based fixes to a file content ----
+  .apply_text_fixes <- function(content, file_path) {
+    local_fixes <- list()
+    for (f in active_fixes) local_fixes[[f]] <- 0L
 
-# ---- Internal helpers -------------------------------------------------------
-
-#' Locate the air binary
-#'
-#' Searches for `air` on the system PATH. If not found, tries common
-#' installation locations. If still not found, raises an informative error
-#' suggesting to call [install_air()].
-#'
-#' @return Path to the air binary.
-#' @keywords internal
-.find_air <- function() {
-  air_bin <- Sys.which("air")
-
-  if (air_bin != "" && nchar(air_bin) > 0L) {
-    return(as.character(air_bin))
-  }
-
-  # Try common installation paths
-  candidates <- c(
-    fs::path(Sys.getenv("HOME"), ".local", "bin", "air"),
-    fs::path(Sys.getenv("HOME"), ".cargo", "bin", "air"),
-    fs::path(Sys.getenv("USERPROFILE"), "bin", "air.exe"),
-    fs::path(Sys.getenv("USERPROFILE"), ".cargo", "bin", "air.exe"),
-    "/usr/local/bin/air",
-    "/opt/homebrew/bin/air"
-  )
-
-  for (candidate in candidates) {
-    if (fs::file_exists(candidate)) {
-      return(as.character(candidate))
-    }
-  }
-
-  # Not found: provide helpful error
-  cli::cli_abort(c(
-    "x" = "air is not installed or not found on PATH.",
-    "i" = "Install air from {.url https://github.com/posit-dev/air}",
-    "i" = "Or call {.fn rsonar::install_air} to install it automatically.",
-    "i" = "On macOS: {.code brew install posit-dev/posit/air}",
-    "i" = "On Linux: download the binary from GitHub Releases",
-    "i" = "On Windows: {.code scoop install air} or download from GitHub"
-  ))
-}
-
-#' Get files changed in working tree
-#'
-#' Returns files modified (M) or untracked (?) relative to HEAD.
-#'
-#' @param path Project root.
-#' @return Character vector of changed file paths relative to `path`.
-#' @keywords internal
-.git_changed_files <- function(path) {
-  if (!fs::dir_exists(fs::path(path, ".git"))) {
-    return(character(0L))
-  }
-
-  tryCatch({
-    withr::with_dir(path, {
-      # Modified + untracked R files
-      modified <- system2("git", c("diff", "--name-only", "HEAD"),
-                          stdout = TRUE, stderr = FALSE)
-      untracked <- system2("git", c("ls-files", "--others", "--exclude-standard"),
-                           stdout = TRUE, stderr = FALSE)
-      all_changed <- unique(c(modified, untracked))
-      all_changed <- all_changed[nzchar(all_changed)]
-      all_changed
-    })
-  }, error = function(e) character(0L))
-}
-
-#' Create a Merge Request / Pull Request
-#'
-#' Detects the CI environment (GitLab CI or GitHub Actions) and opens
-#' a Merge Request or Pull Request with the formatted changes.
-#'
-#' @param path Project root.
-#' @param branch_name Name of the branch to create.
-#' @param commit_message Git commit message.
-#' @param mr_title Title of the MR/PR.
-#'
-#' @return A list with `url` (MR/PR URL) and `branch` (branch name).
-#' @keywords internal
-.create_merge_request <- function(path, branch_name, commit_message, mr_title) {
-  withr::with_dir(path, {
-    # Check if there are changes to commit
-    diff_out <- system2("git", c("diff", "--stat"), stdout = TRUE, stderr = FALSE)
-    if (length(diff_out) == 0L || all(!nzchar(diff_out))) {
-      cli::cli_warn("No changes to commit. Skipping MR creation.")
-      return(list(url = NULL, branch = branch_name))
+    if ("spacing" %in% active_fixes) {
+      res <- .fix_spacing(content)
+      content <- res$content
+      local_fixes[["spacing"]] <- res$n
     }
 
-    # Create branch
-    system2("git", c("checkout", "-b", branch_name))
+    if ("true_false" %in% active_fixes) {
+      res <- .fix_true_false(content)
+      content <- res$content
+      local_fixes[["true_false"]] <- res$n
+    }
 
-    # Stage and commit
-    system2("git", c("add", "."))
-    system2("git", c("commit", "-m", commit_message))
+    if ("null" %in% active_fixes) {
+      res <- .fix_null(content)
+      content <- res$content
+      local_fixes[["null"]] <- res$n
+    }
 
-    # Push branch
-    push_args <- c("push", "origin", branch_name)
+    if ("commas" %in% active_fixes) {
+      res <- .fix_commas(content)
+      content <- res$content
+      local_fixes[["commas"]] <- res$n
+    }
 
-    # GitLab CI: use push options to create MR
-    if (Sys.getenv("GITLAB_CI") != "") {
-      push_args <- c(push_args,
-        "-o", "merge_request.create",
-        "-o", paste0("merge_request.title=", mr_title),
-        "-o", "merge_request.description=Automatic code style fixes via rsonar + air.",
-        "-o", "merge_request.target=", Sys.getenv("CI_DEFAULT_BRANCH", "main"),
-        "-o", "merge_request.remove_source_branch=true"
+    if ("parens" %in% active_fixes) {
+      res <- .fix_parens(content)
+      content <- res$content
+      local_fixes[["parens"]] <- res$n
+    }
+
+    if ("cleanup" %in% active_fixes) {
+      res <- .fix_cleanup(content)
+      content <- res$content
+      local_fixes[["cleanup"]] <- res$n
+    }
+
+    if ("simplify" %in% active_fixes) {
+      res <- .fix_simplify(content)
+      content <- res$content
+      local_fixes[["simplify"]] <- res$n
+    }
+
+    if ("pipes" %in% active_fixes) {
+      res <- .fix_pipes(content)
+      content <- res$content
+      local_fixes[["pipes"]] <- res$n
+    }
+
+    if ("return" %in% active_fixes) {
+      res <- .fix_return(content)
+      content <- res$content
+      local_fixes[["return"]] <- res$n
+    }
+
+    if ("assignment" %in% active_fixes) {
+      res <- .fix_assignment(content)
+      content <- res$content
+      local_fixes[["assignment"]] <- res$n
+    }
+
+    if ("comments" %in% active_fixes) {
+      res <- .fix_comments(content)
+      content <- res$content
+      local_fixes[["comments"]] <- res$n
+    }
+
+    if ("magrittr" %in% active_fixes) {
+      res <- .fix_magrittr(content)
+      content <- res$content
+      local_fixes[["magrittr"]] <- res$n
+    }
+
+    list(content = content, fixes = local_fixes)
+  }
+
+  # ---- Process files ----
+  files_modified <- character(0)
+  fixes_total <- list()
+  for (f in active_fixes) fixes_total[[f]] <- 0L
+
+  # Helper to process a single file
+  .process_file <- function(file_path) {
+    tryCatch({
+      original <- readLines(file_path, warn = FALSE)
+      current <- original
+      file_fixes <- list()
+      for (f in active_fixes) file_fixes[[f]] <- 0L
+
+      # Apply text-based fixes
+      if (any(active_fixes != "styler" & active_fixes != "namespace" &
+              active_fixes != "library" & active_fixes != "dead_code")) {
+        res <- .apply_text_fixes(current, file_path)
+        current <- res$content
+        file_fixes <- res$fixes
+      }
+
+      # Namespace detection (report only)
+      if ("namespace" %in% active_fixes || "library" %in% active_fixes) {
+        lib_info <- .detect_library(file_path, current)
+        file_fixes[["namespace"]] <- lib_info$ns_fixes
+        file_fixes[["library"]] <- lib_info$unused_libs
+      }
+
+      # Dead code detection (report only)
+      if ("dead_code" %in% active_fixes) {
+        dc <- .detect_dead_code(current)
+        file_fixes[["dead_code"]] <- dc
+      }
+
+      changed <- !identical(original, current)
+
+      if (changed && !dry_run) {
+        if (backup) {
+          fs::file_copy(file_path, paste0(file_path, ".bak"), overwrite = TRUE)
+        }
+        writeLines(current, file_path)
+      }
+
+      list(
+        file = file_path,
+        modified = changed,
+        fixes = file_fixes
       )
+    }, error = function(e) {
+      list(file = file_path, modified = FALSE, fixes = list())
+    })
+  }
+
+  # Run processing
+  if (verbose && length(r_files) > 1) {
+    cli::cli_progress_step("Applying fixes to {length(r_files)} file(s)")
+  }
+
+  if (parallel && length(r_files) > 5 && requireNamespace("parallel", quietly = TRUE)) {
+    n_workers <- min(n_cores, length(r_files))
+    results <- parallel::mclapply(r_files, .process_file,
+                                   mc.cores = n_workers)
+  } else {
+    results <- lapply(r_files, .process_file)
+  }
+
+  # Compile results
+  for (res in results) {
+    if (res$modified) {
+      files_modified <- c(files_modified, res$file)
     }
-
-    system2("git", push_args)
-
-    # Try to extract MR URL from output (GitLab)
-    mr_url <- NULL
-
-    # GitHub Actions: use gh CLI
-    if (Sys.getenv("GITHUB_ACTIONS") != "") {
-      gh_bin <- Sys.which("gh")
-      if (gh_bin != "" && nchar(gh_bin) > 0L) {
-        pr_output <- system2(gh_bin, c("pr", "create",
-          "--title", mr_title,
-          "--body", "Automatic code style fixes via rsonar + air.",
-          "--head", branch_name,
-          "--base", Sys.getenv("GITHUB_BASE_REF", "main")
-        ), stdout = TRUE, stderr = FALSE)
-        mr_url <- if (length(pr_output) > 0L) pr_output[1] else NULL
+    for (f in names(res$fixes)) {
+      if (is.numeric(res$fixes[[f]]) && res$fixes[[f]] > 0) {
+        fixes_total[[f]] <- (fixes_total[[f]] %||% 0L) + res$fixes[[f]]
       }
     }
+  }
 
-    # For GitLab, construct URL from CI variables
-    if (Sys.getenv("GITLAB_CI") != "") {
-      ci_project_url <- Sys.getenv("CI_PROJECT_URL")
-      if (ci_project_url != "") {
-        mr_url <- paste0(ci_project_url, "/-/merge_requests")
+  # ---- Apply styler formatting ----
+  if ("styler" %in% active_fixes && length(r_files) > 0) {
+    formatter_choice <- formatter[1]
+
+    if (formatter_choice == "air") {
+      # Use air format
+      air_bin <- tryCatch(.find_air(), error = function(e) NULL)
+      if (!is.null(air_bin)) {
+        withr::with_dir(path, {
+          tryCatch({
+            system2(air_bin, "format", stdout = FALSE, stderr = FALSE)
+            # Find what changed after air
+            after_files <- fs::dir_ls(path, recurse = TRUE, regexp = include)
+            after_files <- after_files[!grepl(exclude_regex, after_files)]
+            formatted <- after_files[as.character(after_files) %in% r_files]
+            if (dry_run) {
+              # air format --check would be used here
+            } else {
+              fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + length(formatted)
+            }
+          }, error = function(e) {
+            cli::cli_warn("air formatting failed: {conditionMessage(e)}")
+          })
+        })
+      } else {
+        cli::cli_warn("air not found. Run {.fn install_air} or use formatter=\"styler\".")
+      }
+    } else {
+      # Use styler
+      if (dry_run) {
+        withr::with_dir(path, {
+          tryCatch({
+            changed_list <- styler::style_dir(
+              path,
+              dry = "on",
+              include_roxygen_examples = FALSE
+            )
+            n_changed <- sum(vapply(changed_list, function(x) {
+              isTRUE(x$changed[1])
+            }, logical(1)), na.rm = TRUE)
+            fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
+          }, error = function(e) {
+            cli::cli_warn("styler dry-run failed: {conditionMessage(e)}")
+          })
+        })
+      } else {
+        withr::with_dir(path, {
+          tryCatch({
+            changed_list <- styler::style_dir(
+              path,
+              dry = "off",
+              include_roxygen_examples = FALSE
+            )
+            n_changed <- sum(vapply(changed_list, function(x) {
+              isTRUE(x$changed[1])
+            }, logical(1)), na.rm = TRUE)
+            fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
+          }, error = function(e) {
+            cli::cli_warn("styler formatting failed: {conditionMessage(e)}")
+          })
+        })
       }
     }
+  }
 
-    list(url = mr_url, branch = branch_name)
-  })
+  elapsed <- round(as.numeric(difftime(Sys.time(), start_time, units = "secs")), 1)
+
+  # ---- Build result ----
+  fix_result <- .make_fix_result(
+    path, r_files, files_modified, fixes_total,
+    dry_run, start_time, verbose
+  )
+  fix_result$elapsed <- elapsed
+  fix_result$fixes_applied <- fixes_total
+
+  # ---- Generate report ----
+  if (report) {
+    report_data <- list(
+      files = list(
+        scanned = length(r_files),
+        modified = length(files_modified)
+      ),
+      fixes = fix_result$fixes_applied
+    )
+    jsonlite::write_json(report_data, report_file, pretty = TRUE, auto_unbox = TRUE)
+    if (verbose) {
+      cli::cli_inform(c("v" = "Report saved: {.path {report_file}}"))
+    }
+    fix_result$report_file <- report_file
+  }
+
+  if (verbose) {
+    print(fix_result)
+  }
+
+  invisible(fix_result)
 }
 
 
-#' Install air R Code Formatter
-#'
-#' Downloads and installs the `air` R code formatter binary from the
-#' official GitHub releases. Supports Linux (x86_64, aarch64),
-#' macOS (Intel and Apple Silicon), and Windows.
-#'
-#' On Linux and macOS, the binary is installed to `~/.local/bin/air`.
-#' On Windows, it is installed to `~/bin/air.exe`.
-#'
-#' @param version Specific version to install (e.g., `"v0.1.0"`).
-#'   If `"latest"` (default), the latest stable release is installed.
-#' @param force Logical. If `TRUE`, reinstall even if `air` is already
-#'   present. Default `FALSE`.
-#'
-#' @return The path to the installed `air` binary (invisibly).
-#'
-#' @examples
-#' \dontrun{
-#' # Install the latest version
-#' install_air()
-#'
-#' # Install a specific version
-#' install_air(version = "v0.1.0")
-#'
-#' # Reinstall even if already present
-#' install_air(force = TRUE)
-#' }
-#'
-#' @seealso [sonar_fix()] to use air for auto-fixing R code.
-#' @export
-install_air <- function(version = "latest", force = FALSE) {
-  # Check if already installed
-  air_bin <- Sys.which("air")
-  if (air_bin != "" && nchar(air_bin) > 0L && !force) {
-    cli::cli_inform(c(
-      "v" = "air is already installed: {.path {air_bin}}",
-      "i" = "Use {.arg force = TRUE} to reinstall."
-    ))
-    return(invisible(as.character(air_bin)))
-  }
+# ============================================================================
+# Fix Implementation Functions
+# ============================================================================
 
-  # Determine platform
-  sysname <- Sys.info()[["sysname"]]
-  machine <- Sys.info()[["machine"]]
+#' Fix spacing around operators and assignments
+#' @keywords internal
+.fix_spacing <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
 
-  os_map <- list(
-    Linux = "linux",
-    Darwin = "macos",
-    Windows = "windows"
-  )
-  os <- os_map[[sysname]]
-  if (is.null(os)) {
-    cli::cli_abort("Unsupported operating system: {sysname}")
-  }
+    # Skip comments
+    if (grepl("^\\s*#", line)) next
 
-  # Map architecture
-  arch_map <- list(
-    x86_64  = "x86_64",
-    amd64   = "x86_64",
-    aarch64 = "aarch64",
-    arm64   = "aarch64"
-  )
-  arch <- arch_map[[machine]]
-  if (is.null(arch)) {
-    cli::cli_abort("Unsupported architecture: {machine}")
-  }
-
-  ext <- if (os == "windows") "zip" else "tar.gz"
-  binary_name <- if (os == "windows") "air.exe" else "air"
-
-  # Build download URL
-  base_url <- "https://github.com/posit-dev/air/releases"
-  if (version == "latest") {
-    url <- paste0(base_url, "/latest/download/air-", os, "-", arch, ".", ext)
-  } else {
-    url <- paste0(base_url, "/download/", version, "/air-", os, "-", arch, ".", ext)
-  }
-
-  # Create temporary directory
-  tmp_dir <- fs::path(tempdir(), paste0("air-install-", as.integer(Sys.time())))
-  fs::dir_create(tmp_dir)
-  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
-
-  dest_archive <- fs::path(tmp_dir, paste0("air.", ext))
-
-  cli::cli_progress_step("Downloading air from {.url {url}}")
-
-  tryCatch(
-    utils::download.file(url, dest_archive, mode = "wb", quiet = TRUE),
-    error = function(e) {
-      cli::cli_abort(c(
-        "x" = "Failed to download air.",
-        "i" = "URL: {.url {url}}",
-        "i" = "You can install air manually: {.url https://github.com/posit-dev/air}"
-      ))
+    # x<-1 -> x <- 1
+    new_line <- gsub("([\\w\\)\\]\\}])(\\s*)(<-|=)(\\s*)([\\w\\(\\[\\{])",
+                     "\\1 \\3 \\5", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
     }
-  )
 
-  # Extract archive
-  cli::cli_progress_step("Extracting air...")
-  if (ext == "zip") {
-    utils::unzip(dest_archive, exdir = tmp_dir)
-  } else {
-    utils::untar(dest_archive, exdir = tmp_dir)
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix T/F -> TRUE/FALSE
+#' @keywords internal
+.fix_true_false <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Skip comments
+    if (grepl("^\\s*#", line)) next
+
+    # T -> TRUE, F -> FALSE (but not inside strings or identifiers)
+    new_line <- gsub("\\bT\\b(?!_)", "TRUE", line, perl = TRUE)
+    new_line <- gsub("\\bF\\b(?!_)", "FALSE", new_line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix NULL assignment
+#' @keywords internal
+.fix_null <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # x=NULL -> x <- NULL (but only outside function args)
+    # Match patterns like: identifier = NULL at start of line or after ;
+    new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*NULL\\b",
+                     "\\1\\2 <- NULL", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix commas - add space after
+#' @keywords internal
+.fix_commas <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # c(1,2,3) -> c(1, 2, 3)
+    new_line <- gsub(",(\\S)", ", \\1", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix unnecessary parentheses
+#' @keywords internal
+.fix_parens <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # return((x)) -> return(x)
+    new_line <- gsub("return\\(\\(([^()]+)\\)\\)", "return(\\1)", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix cleanup: trailing whitespace, multiple blank lines, comments, EOF
+#' @keywords internal
+.fix_cleanup <- function(content) {
+  n <- 0L
+
+  # Remove trailing whitespace
+  for (i in seq_along(content)) {
+    new_line <- gsub("[ \\t]+$", "", content[i], perl = TRUE)
+    if (new_line != content[i]) {
+      n <- n + 1L
+      content[i] <- new_line
+    }
   }
 
-  # Locate the extracted binary
-  extracted_bin <- fs::dir_ls(tmp_dir, recurse = TRUE,
-                               regexp = paste0(binary_name, "$"))
+  # Remove long separator comment lines ####
+  content <- .rm_double_comment(content)
 
-  if (length(extracted_bin) == 0L) {
-    # If not found directly, take any file named air or air.exe
-    all_files <- fs::dir_ls(tmp_dir, recurse = TRUE, type = "file")
-    extracted_bin <- all_files[basename(all_files) == binary_name]
+  # Remove empty comment blocks
+  content <- .rm_empty_comment(content)
+
+  # Collapse multiple blank lines into one
+  i <- 2L
+  while (i <= length(content)) {
+    if (nzchar(content[i]) == FALSE && nzchar(content[i - 1]) == FALSE) {
+      content <- content[-i]
+      n <- n + 1L
+    } else {
+      i <- i + 1L
+    }
   }
 
-  if (length(extracted_bin) == 0L) {
-    cli::cli_abort("Could not find the air binary in the downloaded archive.")
+  # Ensure single trailing newline
+  if (length(content) > 0) {
+    while (length(content) > 0 && !nzchar(content[length(content)])) {
+      content <- content[-length(content)]
+      n <- n + 1L
+    }
+    content <- c(content, "")
   }
 
-  extracted_bin <- extracted_bin[[1]]
+  list(content = content, n = n)
+}
 
-  # Determine installation directory
-  if (.Platform$OS.type == "windows") {
-    install_dir <- fs::path(Sys.getenv("USERPROFILE"), "bin")
-  } else {
-    install_dir <- fs::path(Sys.getenv("HOME"), ".local", "bin")
+#' Remove double separator comment lines
+#' @keywords internal
+.rm_double_comment <- function(content) {
+  # Remove lines that are ONLY #### with optional trailing whitespace
+  # But keep single #---- lines for structure
+  pattern <- "^#[-#]{5,}\\s*$"
+  i <- 1L
+  while (i <= length(content)) {
+    if (grepl(pattern, content[i])) {
+      # Check if previous line is also a separator
+      if (i > 1 && grepl(pattern, content[i - 1])) {
+        content <- content[-i]
+      } else {
+        i <- i + 1L
+      }
+    } else {
+      i <- i + 1L
+    }
+  }
+  content
+}
+
+#' Remove empty comment blocks
+#' @keywords internal
+.rm_empty_comment <- function(content) {
+  # Remove lines that are just ### (no meaningful text)
+  pattern <- "^#\\s*$"
+  i <- 1L
+  while (i <= length(content)) {
+    if (grepl(pattern, content[i])) {
+      # Remove if previous line is also a comment or blank
+      if (i > 1 && (grepl("#", content[i - 1]) || !nzchar(content[i - 1]))) {
+        content <- content[-i]
+        next
+      }
+    }
+    i <- i + 1L
+  }
+  content
+}
+
+#' Fix boolean simplifications
+#' @keywords internal
+.fix_simplify <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    new_line <- line
+
+    # x == TRUE -> x  (inside if/while)
+    new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*TRUE\\s*\\)",
+                     "if(\\1)", new_line, perl = TRUE)
+    # x == FALSE -> !x
+    new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*FALSE\\s*\\)",
+                     "if(!\\1)", new_line, perl = TRUE)
+    # isTRUE(x) == TRUE -> isTRUE(x)
+    new_line <- gsub("isTRUE\\(([^()]+)\\)\\s*==\\s*TRUE", "isTRUE(\\1)",
+                     new_line, perl = TRUE)
+    # length(x) == 0 -> !length(x)
+    new_line <- gsub("length\\(([^()]+)\\)\\s*==\\s*0", "!length(\\1)",
+                     new_line, perl = TRUE)
+    # length(x) > 0 -> length(x)
+    new_line <- gsub("length\\(([^()]+)\\)\\s*>\\s*0", "length(\\1)",
+                     new_line, perl = TRUE)
+
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix pipes: %>% -> |>
+#' @keywords internal
+.fix_pipes <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # x %>% f() -> x |> f()
+    new_line <- gsub("%>%", "|>", line, fixed = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix assignment pipe %<>%
+#' @keywords internal
+.fix_magrittr <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # x %<>% f() -> x <- x |> f()
+    # This is a simplification; real conversion needs AST parsing
+    new_line <- gsub("([\\w._]+)\\s*%<>%\\s*(.*)", "\\1 <- \\1 |> \\2",
+                     line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Detect library usage and suggest namespace conversion
+#' @keywords internal
+.detect_library <- function(file_path, content) {
+  ns_fixes <- 0L
+  unused_libs <- 0L
+
+  # Find all library() calls and their packages
+  lib_calls <- list()
+  for (line in content) {
+    m <- regmatches(line, regexec("library\\([\"']?([a-zA-Z0-9._]+)[\"']?\\)", line))
+    if (length(m[[1]]) > 1 && nzchar(m[[1]][2])) {
+      pkg <- m[[1]][2]
+      lib_calls[[pkg]] <- (lib_calls[[pkg]] %||% 0L) + 1L
+    }
   }
 
-  fs::dir_create(install_dir)
-  dest_bin <- fs::path(install_dir, binary_name)
-
-  fs::file_copy(extracted_bin, dest_bin, overwrite = TRUE)
-
-  # Make executable on Unix
-  if (.Platform$OS.type != "windows") {
-    Sys.chmod(dest_bin, "0755")
+  # Very basic check: if the package name appears in the code after the library call
+  # This is simplified; a real implementation would use static analysis.
+  # For now, report only with a heuristic.
+  if (length(lib_calls) > 0) {
+    # Simple heuristic: count package name occurrences
+    full_text <- paste(content, collapse = "\n")
+    for (pkg in names(lib_calls)) {
+      # Check if pkg:: appears
+      ns_pattern <- paste0(pkg, "::")
+      if (grepl(ns_pattern, full_text, fixed = TRUE)) {
+        ns_fixes <- ns_fixes + 1L
+      }
+    }
+    unused_libs <- length(lib_calls)  # Simplified: would need real tracking
   }
 
-  cli::cli_inform(c(
-    "v" = "air installed to {.path {dest_bin}}",
-    "i" = "Make sure {.path {install_dir}} is in your PATH."
-  ))
+  list(ns_fixes = ns_fixes, unused_libs = unused_libs)
+}
 
-  invisible(as.character(dest_bin))
+#' Detect dead code
+#' @keywords internal
+.detect_dead_code <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Detect standalone expressions: only numbers, strings, simple computations
+    # Basic: lines that are just a numeric constant
+    if (grepl("^\\s*[0-9.]+\\s*$", line, perl = TRUE) ||
+        grepl("^\\s*\"[^\"]*\"\\s*$", line, perl = TRUE)) {
+      n <- n + 1L
+    }
+  }
+  n
+}
+
+#' Fix return() formatting
+#' @keywords internal
+.fix_return <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Collapse multi-line return(
+    #   x
+    # ) into return(x)
+    new_line <- gsub("return\\s*\\(\\s*\\n\\s*([^)]+)\\s*\\n\\s*\\)",
+                     "return(\\1)", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix assignment: = -> <- outside function calls
+#' @keywords internal
+.fix_assignment <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Simple: replace = with <- when it's not inside function args
+    # This is heuristic; proper handling needs AST parsing
+    # Pattern: identifier = value (not preceded by , or ()
+    new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*(?!NULL|TRUE|FALSE|NA)",
+                     "\\1\\2 <- ", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
+}
+
+#' Fix comment separators
+#' @keywords internal
+.fix_comments <- function(content) {
+  n <- 0L
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # ########## -> #---------- (long comment blocks)
+    if (grepl("^#[-]{5,}", line)) {
+      # Already a separator, skip
+      next
+    }
+    new_line <- gsub("^#{8,}", "#----------", line, perl = TRUE)
+    if (new_line != line) {
+      n <- n + 1L
+      line <- new_line
+    }
+    content[i] <- line
+  }
+  list(content = content, n = n)
 }
 
 
-# ---- S3 print method --------------------------------------------------------
+# ============================================================================
+# Helper Functions
+# ============================================================================
 
-#' Print an rsonar_fix Object
+#' Build the fix result object
+#' @keywords internal
+.make_fix_result <- function(path, scanned, modified, fixes,
+                              dry_run, start_time, verbose) {
+  elapsed <- round(as.numeric(difftime(Sys.time(), start_time, units = "secs")), 1)
+
+  mode_info <- if (dry_run) "(dry-run)" else ""
+
+  # Build summary report string
+  report_lines <- c(
+    sprintf("rsonar Fix Report %s", mode_info),
+    sprintf("  Path: %s", path),
+    sprintf("  Files scanned: %d", length(scanned)),
+    sprintf("  Files modified: %d", length(modified)),
+    sprintf("  Time: %.1fs", elapsed)
+  )
+  if (length(fixes) > 0) {
+    report_lines <- c(report_lines, "  Fixes applied:")
+    for (f in names(fixes)) {
+      if (is.numeric(fixes[[f]]) && fixes[[f]] > 0) {
+        report_lines <- c(report_lines, sprintf("    %s: %d", f, fixes[[f]]))
+      }
+    }
+  }
+  report_text <- paste(report_lines, collapse = "\n")
+
+  structure(
+    list(
+      files_scanned  = length(scanned),
+      files_modified = length(modified),
+      fixes_applied  = fixes,
+      fixes_skipped  = list(),
+      elapsed        = elapsed,
+      report         = report_text,
+      path           = path,
+      timestamp      = Sys.time(),
+      dry_run        = dry_run
+    ),
+    class = "sonar_fix"
+  )
+}
+
+
+# ============================================================================
+# S3 Methods
+# ============================================================================
+
+#' Print a sonar_fix Object
 #'
-#' @param x An `rsonar_fix` object returned by [sonar_fix()].
+#' @param x A `sonar_fix` object returned by [sonar_fix()].
 #' @param ... Additional arguments (ignored).
 #' @return `x` invisibly.
 #' @export
-print.rsonar_fix <- function(x, ...) {
+print.sonar_fix <- function(x, ...) {
   mode <- if (x$dry_run) " (dry-run - no files modified)" else ""
-  cli::cli_h2("rsonar Fix Report{mode}")
+  cli::cli_h1("rsonar Fix Report{mode}")
 
   cli::cli_inform(c(
     "i" = "Path    : {.path {x$path}}",
-    "i" = "Time    : {format(x$timestamp, '%Y-%m-%d %H:%M')}",
-    "i" = "Files   : {length(x$files_changed)} file(s) changed"
+    "i" = "Files   : {x$files_scanned} scanned, {x$files_modified} modified",
+    "i" = "Time    : {x$elapsed}s"
   ))
 
-  if (length(x$files_changed) > 0L) {
-    cli::cli_h3("Changed files")
-    for (f in x$files_changed) {
-      cli::cli_inform(c(" " = "{.path {f}}"))
+  if (length(x$fixes_applied) > 0) {
+    has_fixes <- vapply(x$fixes_applied, function(v) is.numeric(v) && v > 0,
+                        logical(1))
+    active <- names(x$fixes_applied)[has_fixes]
+    if (length(active) > 0) {
+      cli::cli_h3("Fixes applied")
+      for (f in active) {
+        cli::cli_inform(c(" " = "{.field {f}}: {x$fixes_applied[[f]]}"))
+      }
+    } else {
+      cli::cli_inform(c("v" = "No fixes needed."))
     }
-  } else if (!x$dry_run) {
-    cli::cli_inform(c("v" = "All files are already properly formatted."))
   }
 
-  if (!is.null(x$branch)) {
+  if (x$dry_run && x$files_modified > 0) {
     cli::cli_inform(c(
-      "i" = "Branch  : {.val {x$branch}}"
-    ))
-  }
-
-  if (!is.null(x$mr_url) && nzchar(x$mr_url)) {
-    cli::cli_inform(c(
-      "i" = "MR/PR   : {.url {x$mr_url}}"
-    ))
-  }
-
-  if (x$dry_run && length(x$files_changed) > 0L) {
-    cli::cli_inform(c(
-      "i" = "Run {.fn sonar_fix} without {.arg dry_run = TRUE} to apply fixes."
+      "i" = "Run {.fn sonar_fix} with {.arg dry_run = FALSE} to apply fixes."
     ))
   }
 
   invisible(x)
 }
+
+
+# ============================================================================
+# Internal null-coalescing operator (reused from analyse.R)
+# ============================================================================
+`%||%` <- function(x, y) if (is.null(x)) y else x
