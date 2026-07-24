@@ -101,36 +101,19 @@ sonar_autofix <- function(
   target <- target_branch %||%
     Sys.getenv("CI_DEFAULT_BRANCH", Sys.getenv("GITHUB_BASE_REF", "main"))
 
-  git_ok <- tryCatch({
-    withr::with_dir(path, {
-      system2("git", c("config", "--global", "user.name", "rsonar CI"),
-              stdout = FALSE, stderr = FALSE)
-      system2("git", c("config", "--global", "user.email", "rsonar@ci.local"),
-              stdout = FALSE, stderr = FALSE)
+  .git_op_check(path, branch, commit_message)
 
-      br_list <- system2("git", c("branch", "-a"), stdout = TRUE, stderr = FALSE)
-      if (any(grepl(branch, br_list))) {
-        system2("git", c("checkout", "-B", branch),
-                stdout = FALSE, stderr = FALSE)
-      } else {
-        system2("git", c("checkout", "-b", branch),
-                stdout = FALSE, stderr = FALSE)
-      }
-      system2("git", c("add", "."), stdout = FALSE, stderr = FALSE)
-      system2("git", c("commit", "-m", commit_message),
-              stdout = FALSE, stderr = FALSE)
-      system2("git", c("push", "-f", "origin", branch),
-              stdout = FALSE, stderr = FALSE)
-      TRUE
-    })
-  }, error = function(e) FALSE)
-
-  if (!git_ok) {
-    if (verbose) cli::cli_warn("Git operations failed.")
-    return(invisible(list(
-      modified = TRUE, branch = NULL, provider = provider,
-      url = NULL, files = fix_res$files_modified, fixes = total_fixes
-    )))
+  # Check token and project ID before attempting push/MR
+  token <- .resolve_token(token, provider)
+  if (provider == "gitlab") {
+    pid <- Sys.getenv("CI_PROJECT_ID", "")
+    if (pid == "" || token == "") {
+      cli::cli_abort(c(
+        "x" = "GitLab credentials missing.",
+        "i" = "Set GITLAB_TOKEN in CI/CD variables.",
+        "i" = "Or ensure CI_PROJECT_ID is defined."
+      ))
+    }
   }
 
   # Step 3: Create MR/PR
@@ -234,6 +217,65 @@ sonar_autofix <- function(
   }
   if (!file.exists(tmp) || file.info(tmp)$size == 0) return(list())
   jsonlite::fromJSON(readLines(tmp, warn = FALSE), simplifyVector = FALSE)
+}
+
+# ---- Internal helpers ----
+.git_op_check <- function(path, branch, commit_message) {
+  result <- tryCatch({
+    withr::with_dir(path, {
+      system2("git", c("config", "--global", "user.name", "rsonar CI"),
+              stdout = FALSE, stderr = FALSE)
+      system2("git", c("config", "--global", "user.email",
+                       "rsonar@ci.local"),
+              stdout = FALSE, stderr = FALSE)
+
+      br_list <- system2("git", c("branch", "-a"),
+                         stdout = TRUE, stderr = FALSE)
+      if (any(grepl(branch, br_list))) {
+        system2("git", c("checkout", "-B", branch),
+                stdout = FALSE, stderr = FALSE)
+      } else {
+        system2("git", c("checkout", "-b", branch),
+                stdout = FALSE, stderr = FALSE)
+      }
+      system2("git", c("add", "."), stdout = FALSE, stderr = FALSE)
+      rc <- system2("git", c("commit", "-m", commit_message),
+                    stdout = TRUE, stderr = TRUE)
+      if (attr(rc, "status") != 0) stop("git commit failed")
+      rc <- system2("git", c("push", "-f", "origin", branch),
+                    stdout = TRUE, stderr = TRUE)
+      if (attr(rc, "status") != 0) stop("git push failed")
+      TRUE
+    })
+  }, error = function(e) {
+    # NO SILENT FAILURE - abort with clear message
+    cli::cli_abort(c(
+      "x" = "Git autofix failed: {conditionMessage(e)}",
+      "i" = "Check that the CI token has write_repository and api scopes.",
+      "i" = "Verify that protected branches allow pushing to 'auto/rsonar-fix*'."
+    ))
+  })
+  invisible(result)
+}
+
+.resolve_token <- function(token, provider) {
+  if (token != "" && !is.null(token)) return(token)
+  if (provider == "gitlab") {
+    tokens <- c(
+      Sys.getenv("GITLAB_TOKEN", ""),
+      Sys.getenv("PERSONAL_ACCESS_TOKEN", ""),
+      Sys.getenv("CI_JOB_TOKEN", "")
+    )
+  } else {
+    tokens <- c(
+      Sys.getenv("GITHUB_TOKEN", ""),
+      Sys.getenv("GITHUB_PAT", "")
+    )
+  }
+  for (t in tokens) {
+    if (t != "" && nchar(t) > 0) return(t)
+  }
+  ""
 }
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
