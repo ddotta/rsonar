@@ -133,19 +133,19 @@
 #'   [install_air()] to install the air formatter.
 #' @export
 sonar_fix <- function(
-    path = ".",
-    include = "\\.[Rr]$",
-    exclude = c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules"),
-    fixes = "all",
-    formatter = c("styler", "air"),
-    dry_run = TRUE,
-    backup = FALSE,
-    parallel = TRUE,
-    n_cores = parallel::detectCores(),
-    report = TRUE,
-    report_file = "sonar-fixes.json",
-    verbose = interactive()) {
-
+  path = ".",
+  include = "\\.[Rr]$",
+  exclude = c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules"),
+  fixes = "all",
+  formatter = c("styler", "air"),
+  dry_run = TRUE,
+  backup = FALSE,
+  parallel = TRUE,
+  n_cores = parallel::detectCores(),
+  report = TRUE,
+  report_file = "sonar-fixes.json",
+  verbose = interactive()
+) {
   path <- fs::path_abs(path)
 
   if (!fs::dir_exists(path)) {
@@ -161,10 +161,12 @@ sonar_fix <- function(
   }
 
   # ---- Determine fix categories ----
-  all_fixes <- c("styler", "spacing", "true_false", "null", "commas",
-                 "parens", "cleanup", "simplify", "pipes", "magrittr",
-                 "namespace", "library", "dead_code", "return",
-                 "assignment", "comments")
+  all_fixes <- c(
+    "styler", "spacing", "true_false", "null", "commas",
+    "parens", "cleanup", "simplify", "pipes", "magrittr",
+    "namespace", "library", "dead_code", "return",
+    "assignment", "comments"
+  )
   if (identical(fixes, "all")) {
     active_fixes <- all_fixes
   } else {
@@ -184,7 +186,8 @@ sonar_fix <- function(
     cli::cli_inform(c("!" = "No R files found at {.path {path}}"))
     return(invisible(.make_fix_result(
       path, r_files, character(0), list(),
-      dry_run, start_time, verbose)))
+      dry_run, start_time, verbose
+    )))
   }
 
   if (verbose) {
@@ -284,50 +287,53 @@ sonar_fix <- function(
 
   # Helper to process a single file
   .process_file <- function(file_path) {
-    tryCatch({
-      original <- readLines(file_path, warn = FALSE)
-      current <- original
-      file_fixes <- list()
-      for (f in active_fixes) file_fixes[[f]] <- 0L
+    tryCatch(
+      {
+        original <- readLines(file_path, warn = FALSE)
+        current <- original
+        file_fixes <- list()
+        for (f in active_fixes) file_fixes[[f]] <- 0L
 
-      # Apply text-based fixes
-      if (any(active_fixes != "styler" & active_fixes != "namespace" &
-              active_fixes != "library" & active_fixes != "dead_code")) {
-        res <- .apply_text_fixes(current, file_path)
-        current <- res$content
-        file_fixes <- res$fixes
-      }
-
-      # Namespace detection (report only)
-      if ("namespace" %in% active_fixes || "library" %in% active_fixes) {
-        lib_info <- .detect_library(file_path, current)
-        file_fixes[["namespace"]] <- lib_info$ns_fixes
-        file_fixes[["library"]] <- lib_info$unused_libs
-      }
-
-      # Dead code detection (report only)
-      if ("dead_code" %in% active_fixes) {
-        dc <- .detect_dead_code(current)
-        file_fixes[["dead_code"]] <- dc
-      }
-
-      changed <- !identical(original, current)
-
-      if (changed && !dry_run) {
-        if (backup) {
-          fs::file_copy(file_path, paste0(file_path, ".bak"), overwrite = TRUE)
+        # Apply text-based fixes
+        if (any(active_fixes != "styler" & active_fixes != "namespace" &
+          active_fixes != "library" & active_fixes != "dead_code")) {
+          res <- .apply_text_fixes(current, file_path)
+          current <- res$content
+          file_fixes <- res$fixes
         }
-        writeLines(current, file_path)
-      }
 
-      list(
-        file = file_path,
-        modified = changed,
-        fixes = file_fixes
-      )
-    }, error = function(e) {
-      list(file = file_path, modified = FALSE, fixes = list())
-    })
+        # Namespace detection (report only)
+        if ("namespace" %in% active_fixes || "library" %in% active_fixes) {
+          lib_info <- .detect_library(file_path, current)
+          file_fixes[["namespace"]] <- lib_info$ns_fixes
+          file_fixes[["library"]] <- lib_info$unused_libs
+        }
+
+        # Dead code detection (report only)
+        if ("dead_code" %in% active_fixes) {
+          dc <- .detect_dead_code(current)
+          file_fixes[["dead_code"]] <- dc
+        }
+
+        changed <- !identical(original, current)
+
+        if (changed && !dry_run) {
+          if (backup) {
+            fs::file_copy(file_path, paste0(file_path, ".bak"), overwrite = TRUE)
+          }
+          writeLines(current, file_path)
+        }
+
+        list(
+          file = file_path,
+          modified = changed,
+          fixes = file_fixes
+        )
+      },
+      error = function(e) {
+        list(file = file_path, modified = FALSE, fixes = list())
+      }
+    )
   }
 
   # Run processing
@@ -338,7 +344,8 @@ sonar_fix <- function(
   if (parallel && length(r_files) > 5 && requireNamespace("parallel", quietly = TRUE)) {
     n_workers <- min(n_cores, length(r_files))
     results <- parallel::mclapply(r_files, .process_file,
-                                   mc.cores = n_workers)
+      mc.cores = n_workers
+    )
   } else {
     results <- lapply(r_files, .process_file)
   }
@@ -364,20 +371,23 @@ sonar_fix <- function(
       air_bin <- tryCatch(.find_air(), error = function(e) NULL)
       if (!is.null(air_bin)) {
         withr::with_dir(path, {
-          tryCatch({
-            system2(air_bin, "format", stdout = FALSE, stderr = FALSE)
-            # Find what changed after air
-            after_files <- fs::dir_ls(path, recurse = TRUE, regexp = include)
-            after_files <- after_files[!grepl(exclude_regex, after_files)]
-            formatted <- after_files[as.character(after_files) %in% r_files]
-            if (dry_run) {
-              # air format --check would be used here
-            } else {
-              fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + length(formatted)
+          tryCatch(
+            {
+              system2(air_bin, "format", stdout = FALSE, stderr = FALSE)
+              # Find what changed after air
+              after_files <- fs::dir_ls(path, recurse = TRUE, regexp = include)
+              after_files <- after_files[!grepl(exclude_regex, after_files)]
+              formatted <- after_files[as.character(after_files) %in% r_files]
+              if (dry_run) {
+                # air format --check would be used here
+              } else {
+                fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + length(formatted)
+              }
+            },
+            error = function(e) {
+              cli::cli_warn("air formatting failed: {conditionMessage(e)}")
             }
-          }, error = function(e) {
-            cli::cli_warn("air formatting failed: {conditionMessage(e)}")
-          })
+          )
         })
       } else {
         cli::cli_warn("air not found. Run {.fn install_air} or use formatter=\"styler\".")
@@ -386,35 +396,33 @@ sonar_fix <- function(
       # Use styler
       if (dry_run) {
         withr::with_dir(path, {
-          tryCatch({
-            changed_list <- styler::style_dir(
-              path,
-              dry = "on",
-              include_roxygen_examples = FALSE
-            )
-            n_changed <- sum(vapply(changed_list, function(x) {
-              isTRUE(x$changed[1])
-            }, logical(1)), na.rm = TRUE)
-            fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
-          }, error = function(e) {
-            cli::cli_warn("styler dry-run failed: {conditionMessage(e)}")
-          })
+          tryCatch(
+            {
+              changed_list <- styler::style_dir(path, dry = "on", include_roxygen_examples = FALSE)
+              if (is.list(changed_list) && length(changed_list) > 0) {
+                n_changed <- sum(vapply(changed_list, function(x) {
+                  if (is.list(x) && !is.null(x$changed)) isTRUE(x$changed[1]) else 0L
+                }, integer(1)), na.rm = TRUE)
+                fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
+              }
+            },
+            error = function(e) NULL
+          )
         })
       } else {
         withr::with_dir(path, {
-          tryCatch({
-            changed_list <- styler::style_dir(
-              path,
-              dry = "off",
-              include_roxygen_examples = FALSE
-            )
-            n_changed <- sum(vapply(changed_list, function(x) {
-              isTRUE(x$changed[1])
-            }, logical(1)), na.rm = TRUE)
-            fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
-          }, error = function(e) {
-            cli::cli_warn("styler formatting failed: {conditionMessage(e)}")
-          })
+          tryCatch(
+            {
+              changed_list <- styler::style_dir(path, dry = "off", include_roxygen_examples = FALSE)
+              if (is.list(changed_list) && length(changed_list) > 0) {
+                n_changed <- sum(vapply(changed_list, function(x) {
+                  if (is.list(x) && !is.null(x$changed)) isTRUE(x$changed[1]) else 0L
+                }, integer(1)), na.rm = TRUE)
+                fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
+              }
+            },
+            error = function(e) NULL
+          )
         })
       }
     }
@@ -470,7 +478,9 @@ sonar_fix <- function(
 
     # x<-1 -> x <- 1
     new_line <- gsub("([\\w\\)\\]\\}])(\\s*)(<-|=)(\\s*)([\\w\\(\\[\\{])",
-                     "\\1 \\3 \\5", line, perl = TRUE)
+      "\\1 \\3 \\5", line,
+      perl = TRUE
+    )
     if (new_line != line) {
       n <- n + 1L
       line <- new_line
@@ -511,7 +521,9 @@ sonar_fix <- function(
     # x=NULL -> x <- NULL (but only outside function args)
     # Match patterns like: identifier = NULL at start of line or after ;
     new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*NULL\\b",
-                     "\\1\\2 <- NULL", line, perl = TRUE)
+      "\\1\\2 <- NULL", line,
+      perl = TRUE
+    )
     if (new_line != line) {
       n <- n + 1L
       line <- new_line
@@ -649,19 +661,29 @@ sonar_fix <- function(
 
     # x == TRUE -> x  (inside if/while)
     new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*TRUE\\s*\\)",
-                     "if(\\1)", new_line, perl = TRUE)
+      "if(\\1)", new_line,
+      perl = TRUE
+    )
     # x == FALSE -> !x
     new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*FALSE\\s*\\)",
-                     "if(!\\1)", new_line, perl = TRUE)
+      "if(!\\1)", new_line,
+      perl = TRUE
+    )
     # isTRUE(x) == TRUE -> isTRUE(x)
     new_line <- gsub("isTRUE\\(([^()]+)\\)\\s*==\\s*TRUE", "isTRUE(\\1)",
-                     new_line, perl = TRUE)
+      new_line,
+      perl = TRUE
+    )
     # length(x) == 0 -> !length(x)
     new_line <- gsub("length\\(([^()]+)\\)\\s*==\\s*0", "!length(\\1)",
-                     new_line, perl = TRUE)
+      new_line,
+      perl = TRUE
+    )
     # length(x) > 0 -> length(x)
     new_line <- gsub("length\\(([^()]+)\\)\\s*>\\s*0", "length(\\1)",
-                     new_line, perl = TRUE)
+      new_line,
+      perl = TRUE
+    )
 
     if (new_line != line) {
       n <- n + 1L
@@ -698,7 +720,9 @@ sonar_fix <- function(
     # x %<>% f() -> x <- x |> f()
     # This is a simplification; real conversion needs AST parsing
     new_line <- gsub("([\\w._]+)\\s*%<>%\\s*(.*)", "\\1 <- \\1 |> \\2",
-                     line, perl = TRUE)
+      line,
+      perl = TRUE
+    )
     if (new_line != line) {
       n <- n + 1L
       line <- new_line
@@ -737,7 +761,7 @@ sonar_fix <- function(
         ns_fixes <- ns_fixes + 1L
       }
     }
-    unused_libs <- length(lib_calls)  # Simplified: would need real tracking
+    unused_libs <- length(lib_calls) # Simplified: would need real tracking
   }
 
   list(ns_fixes = ns_fixes, unused_libs = unused_libs)
@@ -752,7 +776,7 @@ sonar_fix <- function(
     # Detect standalone expressions: only numbers, strings, simple computations
     # Basic: lines that are just a numeric constant
     if (grepl("^\\s*[0-9.]+\\s*$", line, perl = TRUE) ||
-        grepl("^\\s*\"[^\"]*\"\\s*$", line, perl = TRUE)) {
+      grepl("^\\s*\"[^\"]*\"\\s*$", line, perl = TRUE)) {
       n <- n + 1L
     }
   }
@@ -769,7 +793,9 @@ sonar_fix <- function(
     #   x
     # ) into return(x)
     new_line <- gsub("return\\s*\\(\\s*\\n\\s*([^)]+)\\s*\\n\\s*\\)",
-                     "return(\\1)", line, perl = TRUE)
+      "return(\\1)", line,
+      perl = TRUE
+    )
     if (new_line != line) {
       n <- n + 1L
       line <- new_line
@@ -789,7 +815,9 @@ sonar_fix <- function(
     # This is heuristic; proper handling needs AST parsing
     # Pattern: identifier = value (not preceded by , or ()
     new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*(?!NULL|TRUE|FALSE|NA)",
-                     "\\1\\2 <- ", line, perl = TRUE)
+      "\\1\\2 <- ", line,
+      perl = TRUE
+    )
     if (new_line != line) {
       n <- n + 1L
       line <- new_line
@@ -828,7 +856,7 @@ sonar_fix <- function(
 #' Build the fix result object
 #' @keywords internal
 .make_fix_result <- function(path, scanned, modified, fixes,
-                              dry_run, start_time, verbose) {
+                             dry_run, start_time, verbose) {
   elapsed <- round(as.numeric(difftime(Sys.time(), start_time, units = "secs")), 1)
 
   mode_info <- if (dry_run) "(dry-run)" else ""
@@ -889,8 +917,10 @@ print.sonar_fix <- function(x, ...) {
   ))
 
   if (length(x$fixes_applied) > 0) {
-    has_fixes <- vapply(x$fixes_applied, function(v) is.numeric(v) && v > 0,
-                        logical(1))
+    has_fixes <- vapply(
+      x$fixes_applied, function(v) is.numeric(v) && v > 0,
+      logical(1)
+    )
     active <- names(x$fixes_applied)[has_fixes]
     if (length(active) > 0) {
       cli::cli_h3("Fixes applied")
@@ -941,18 +971,27 @@ install_air <- function(version = "latest", force = FALSE) {
   }
 
   os <- switch(Sys.info()[["sysname"]],
-    Linux = "linux", Darwin = "macos", Windows = "windows",
-    cli::cli_abort("Unsupported OS"))
+    Linux = "linux",
+    Darwin = "macos",
+    Windows = "windows",
+    cli::cli_abort("Unsupported OS")
+  )
   arch <- switch(Sys.info()[["machine"]],
-    x86_64 = "x86_64", amd64 = "x86_64", aarch64 = "aarch64", arm64 = "aarch64",
-    cli::cli_abort("Unsupported architecture"))
+    x86_64 = "x86_64",
+    amd64 = "x86_64",
+    aarch64 = "aarch64",
+    arm64 = "aarch64",
+    cli::cli_abort("Unsupported architecture")
+  )
 
   ext <- if (os == "windows") "zip" else "tar.gz"
   binary_name <- if (os == "windows") "air.exe" else "air"
 
-  url <- paste0("https://github.com/posit-dev/air/releases/",
-                if (version == "latest") "latest/download" else paste0("download/", version),
-                "/air-", os, "-", arch, ".", ext)
+  url <- paste0(
+    "https://github.com/posit-dev/air/releases/",
+    if (version == "latest") "latest/download" else paste0("download/", version),
+    "/air-", os, "-", arch, ".", ext
+  )
 
   tmp_dir <- tempfile("air-")
   dir.create(tmp_dir)
@@ -961,8 +1000,11 @@ install_air <- function(version = "latest", force = FALSE) {
   dest <- file.path(tmp_dir, paste0("air.", ext))
   utils::download.file(url, dest, mode = "wb", quiet = TRUE)
 
-  if (ext == "zip") utils::unzip(dest, exdir = tmp_dir)
-  else utils::untar(dest, exdir = tmp_dir)
+  if (ext == "zip") {
+    utils::unzip(dest, exdir = tmp_dir)
+  } else {
+    utils::untar(dest, exdir = tmp_dir)
+  }
 
   # Locate binary
   candidates <- list.files(tmp_dir, pattern = binary_name, recursive = TRUE, full.names = TRUE)
