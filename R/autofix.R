@@ -116,6 +116,7 @@ sonar_autofix <- function(
   if (provider == "gitlab") {
     tok <- token
     if (tok == "") tok <- Sys.getenv("GITLAB_TOKEN", "")
+    if (tok == "") tok <- Sys.getenv("PROJECT_TOKEN", "")
     if (tok == "") tok <- Sys.getenv("CI_JOB_TOKEN", "")
 
     pid <- utils::URLencode(Sys.getenv("CI_PROJECT_ID", ""), reserved = TRUE)
@@ -157,18 +158,21 @@ sonar_autofix <- function(
       )
 
       exit <- system2("curl", args, stdout = tmp, stderr = FALSE)
-      if (exit == 0 && file.exists(tmp) && file.info(tmp)$size > 0) {
+      if (exit != 0) {
+        if (verbose) cli::cli_warn(paste("curl exited with code", exit))
+      } else if (!file.exists(tmp) || file.info(tmp)$size == 0) {
+        if (verbose) cli::cli_warn("GitLab API returned empty response")
+      } else {
         resp <- jsonlite::fromJSON(readLines(tmp, warn = FALSE), simplifyVector = FALSE)
         if (!is.null(resp$web_url)) {
           url <- resp$web_url
           if (verbose) cli::cli_inform(c("v" = "MR created: {.url {url}}"))
         } else if (!is.null(resp$message)) {
-          if (verbose) cli::cli_warn(paste("GitLab API:", resp$message))
+          if (verbose) cli::cli_warn(paste("GitLab API:", paste(resp$message, collapse = ", ")))
+        } else {
+          if (verbose) cli::cli_warn(paste("GitLab API response unexpected:", paste(unlist(resp), collapse = ", ")))
         }
       }
-    } else {
-      url <- paste0(Sys.getenv("CI_PROJECT_URL", ""), "/-/merge_requests")
-      if (verbose && url != "") cli::cli_inform(c("i" = "MR URL: {.url {url}}"))
     }
   } else if (provider == "github") {
     url <- .gh_pr(branch, target, mr_title, token, verbose)
