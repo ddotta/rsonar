@@ -28,10 +28,7 @@ sonar_autofix(
 
 - provider:
 
-  Character. Git platform to use. `"gitlab"` : create a Merge Request
-  via GitLab API. `"github"` : create a Pull Request via GitHub CLI
-  (`gh`). `"auto"` : auto-detect from CI environment variables. Default
-  `"auto"`.
+  Character. Git platform to use.
 
 - path:
 
@@ -39,15 +36,11 @@ sonar_autofix(
 
 - fixes:
 
-  Fix categories to apply. Passed to
-  [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md).
-  Default `"all"`.
+  Fix categories to apply. Default `"all"`.
 
 - formatter:
 
-  Formatter to use. Passed to
-  [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md).
-  Default `c("styler", "air")`.
+  Formatter to use. Default `c("styler", "air")`.
 
 - branch:
 
@@ -55,7 +48,7 @@ sonar_autofix(
 
 - target_branch:
 
-  Target branch for the MR/PR. Auto-detected from CI if `NULL`.
+  Target branch for the MR/PR. Auto-detected from CI.
 
 - commit_message:
 
@@ -79,15 +72,4 @@ sonar_autofix(
 
 ## Value
 
-Invisibly, a list with `modified`, `branch`, `provider`, `url`, `files`,
-`fixes`.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-sonar_autofix()
-sonar_autofix(provider = "gitlab")
-sonar_autofix(dry_run = TRUE)
-} # }
-```
+Invisibly, a list with results.

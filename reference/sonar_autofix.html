@@ -82,11 +82,7 @@ creates a Merge Request (GitLab) or Pull Request (GitHub).</p>
 
 
 <dl><dt id="arg-provider">provider<a class="anchor" aria-label="anchor" href="#arg-provider"></a></dt>
-<dd><p>Character. Git platform to use.
-<code>"gitlab"</code> : create a Merge Request via GitLab API.
-<code>"github"</code> : create a Pull Request via GitHub CLI (<code>gh</code>).
-<code>"auto"</code>   : auto-detect from CI environment variables.
-Default <code>"auto"</code>.</p></dd>
+<dd><p>Character. Git platform to use.</p></dd>
 
 
 <dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
@@ -94,23 +90,19 @@ Default <code>"auto"</code>.</p></dd>
 
 
 <dt id="arg-fixes">fixes<a class="anchor" aria-label="anchor" href="#arg-fixes"></a></dt>
-<dd><p>Fix categories to apply. Passed to <code><a href="sonar_fix.html">sonar_fix()</a></code>.
-Default <code>"all"</code>.</p></dd>
+<dd><p>Fix categories to apply. Default <code>"all"</code>.</p></dd>
 
 
 <dt id="arg-formatter">formatter<a class="anchor" aria-label="anchor" href="#arg-formatter"></a></dt>
-<dd><p>Formatter to use. Passed to <code><a href="sonar_fix.html">sonar_fix()</a></code>.
-Default <code>c("styler", "air")</code>.</p></dd>
+<dd><p>Formatter to use. Default <code>c("styler", "air")</code>.</p></dd>
 
 
 <dt id="arg-branch">branch<a class="anchor" aria-label="anchor" href="#arg-branch"></a></dt>
-<dd><p>Name of the branch to create for fixes.
-Default <code>"auto/rsonar-fix"</code>.</p></dd>
+<dd><p>Name of the branch to create for fixes. Default <code>"auto/rsonar-fix"</code>.</p></dd>
 
 
 <dt id="arg-target-branch">target_branch<a class="anchor" aria-label="anchor" href="#arg-target-branch"></a></dt>
-<dd><p>Target branch for the MR/PR.
-Auto-detected from CI if <code>NULL</code>.</p></dd>
+<dd><p>Target branch for the MR/PR. Auto-detected from CI.</p></dd>
 
 
 <dt id="arg-commit-message">commit_message<a class="anchor" aria-label="anchor" href="#arg-commit-message"></a></dt>
@@ -135,19 +127,9 @@ Auto-detected from CI if <code>NULL</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a list with <code>modified</code>, <code>branch</code>, <code>provider</code>,
-<code>url</code>, <code>files</code>, <code>fixes</code>.</p>
+    <p>Invisibly, a list with results.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu">sonar_autofix</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">sonar_autofix</span><span class="op">(</span>provider <span class="op">=</span> <span class="st">"gitlab"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">sonar_autofix</span><span class="op">(</span>dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
