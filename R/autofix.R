@@ -53,7 +53,7 @@ sonar_autofix <- function(
   if (verbose) cli::cli_progress_step("Running sonar_fix()")
   fix_res <- sonar_fix(
     path = path, fixes = fixes, formatter = formatter,
-    dry_run = dry_run, report = TRUE, report_file = "sonar-fixes.json",
+    dry_run = dry_run, report = FALSE,
     verbose = FALSE
   )
 
@@ -94,7 +94,8 @@ sonar_autofix <- function(
     } else {
       system2("git", c("checkout", "-b", branch), stdout = FALSE, stderr = FALSE)
     }
-    system2("git", c("add", "."), stdout = FALSE, stderr = FALSE)
+    # Ne versionner que les fichiers de code, pas les rapports JSON
+    system2("git", c("add", "*.R", "*.Rmd", "*.qmd", "*.md", "*.yml", "*.yaml", "DESCRIPTION", "NAMESPACE"), stdout = FALSE, stderr = FALSE)
     r <- system(paste("git commit -m", shQuote(commit_message)),
       intern = TRUE
     )
