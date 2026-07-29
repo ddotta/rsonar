@@ -26,7 +26,8 @@ The path to the generated HTML file (invisibly).
 }
 \description{
 Produces an interactive HTML report summarizing all results from
-\code{\link[=sonar_analyse]{sonar_analyse()}}: consolidated metrics, lint issues with file navigation,
+\code{\link[=sonar_analyse]{sonar_analyse()}}: consolidated metrics, a hotspots ranking of the files
+to fix first (see \code{\link[=sonar_hotspots]{sonar_hotspots()}}), lint issues with file navigation,
 style violations, test coverage and technical debt.
 }
 \examples{

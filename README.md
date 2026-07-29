@@ -37,6 +37,7 @@ It orchestrates four proven tools:
 | New Code analysis | `sonar_diff()` |
 | Project history | `sonar_trend()` |
 | SARIF integration | `export_sarif()` |
+| Hotspots / files to fix first | `sonar_hotspots()` |
 
 ## Installation
 
@@ -64,6 +65,9 @@ sonar_report(res, output = "quality.html")
 
 # Technical debt index (A to E)
 debt_index(res)
+
+# Hotspots: the files to fix first, ranked by debt
+sonar_hotspots(res)
 
 # Quality Gate (pass/fail like SonarQube)
 quality_gate(res, coverage_min = 80, lint_errors_max = 0)

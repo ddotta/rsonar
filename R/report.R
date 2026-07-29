@@ -1,7 +1,8 @@
 #' Generate an HTML Quality Report
 #'
 #' Produces an interactive HTML report summarizing all results from
-#' [sonar_analyse()]: consolidated metrics, lint issues with file navigation,
+#' [sonar_analyse()]: consolidated metrics, a hotspots ranking of the files
+#' to fix first (see [sonar_hotspots()]), lint issues with file navigation,
 #' style violations, test coverage and technical debt.
 #'
 #' @param x An `rsonar_result` object returned by [sonar_analyse()].
@@ -115,6 +116,37 @@ sonar_report <- function(
     paste(rows, collapse = "\n")
   } else ""
 
+  # Hotspots table (files to fix first, ranked by technical debt)
+  hotspots <- tryCatch(sonar_hotspots(x, n = 10), error = function(e) NULL)
+
+  hotspots_rows <- if (!is.null(hotspots) && nrow(hotspots) > 0 && any(hotspots$debt_minutes > 0)) {
+    shown <- hotspots[hotspots$debt_minutes > 0, , drop = FALSE]
+    rows <- vapply(seq_len(nrow(shown)), function(i) {
+      row <- shown[i, ]
+      debt_col <- if (row$debt_minutes >= 120) "#cf222e" else if (row$debt_minutes >= 30) "#bf8700" else "#1a7f37"
+      cov_txt   <- if (is.na(row$coverage_pct)) "&mdash;" else paste0(row$coverage_pct, "%")
+      style_txt <- if (isTRUE(row$style_issue)) {
+        '<span class="badge" style="background:#bf8700">Yes</span>'
+      } else {
+        "&#10003;"
+      }
+      glue::glue('
+        <tr>
+          <td>{row$rank}</td>
+          <td style="font-family:monospace;font-size:0.85em">{htmlEscape(row$file)}</td>
+          <td><span class="badge" style="background:{debt_col}">{row$debt_minutes} min</span></td>
+          <td>{row$lint_errors}</td>
+          <td>{row$lint_warnings}</td>
+          <td>{row$lint_style}</td>
+          <td>{style_txt}</td>
+          <td>{cov_txt}</td>
+        </tr>')
+    }, character(1))
+    paste(rows, collapse = "\n")
+  } else {
+    '<tr><td colspan="8" style="text-align:center;color:green">&#10003; No hotspots detected</td></tr>'
+  }
+
   glue::glue('<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -203,6 +235,20 @@ sonar_report <- function(
       <table>
         <thead><tr><th>Category</th><th>Issues</th><th>Estimated Cost</th><th>Share</th></tr></thead>
         <tbody>{debt_rows}</tbody>
+      </table>
+    </section>
+
+    <!-- Hotspots -->
+    <section>
+      <h2>&#128293; Hotspots - Files to Fix First</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>File</th><th>Debt</th><th>Errors</th>
+            <th>Warnings</th><th>Style lints</th><th>Needs reformat</th><th>Coverage</th>
+          </tr>
+        </thead>
+        <tbody>{hotspots_rows}</tbody>
       </table>
     </section>
 

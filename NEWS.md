@@ -1,3 +1,15 @@
+# rsonar (development version)
+
+### New features
+
+* `sonar_hotspots()`: ranks files by estimated technical debt so developers
+  know which ones to fix first, similar to SonarQube's "Code Smells" /
+  hotspots view. Previously `debt_index()` only reported a single
+  project-wide score with no per-file breakdown (#12)
+* `sonar_report()`: the HTML report now includes a "Hotspots - Files to
+  Fix First" section (top 10 files by debt), placed right after the
+  Technical Debt summary (#12)
+
 # rsonar 0.2.0 (2026-04-20)
 
 ### New features
