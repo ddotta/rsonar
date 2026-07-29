@@ -54,6 +54,7 @@ reference:
     desc: "Core analysis functions"
     contents:
       - sonar_analyse
+      - sonar_hotspots
   - title: "Quality and Debt"
     desc: "Metrics and thresholds"
     contents:
@@ -93,6 +94,7 @@ reference:
       - print.rsonar_diff
       - print.sonar_fix
       - summary.rsonar_result
+      - print.rsonar_hotspots
 
 news:
   releases:
