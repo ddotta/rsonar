@@ -159,6 +159,10 @@
 <td>SARIF integration</td>
 <td><code><a href="reference/export_sarif.html">export_sarif()</a></code></td>
 </tr>
+<tr>
+<td>Hotspots / files to fix first</td>
+<td><code><a href="reference/sonar_hotspots.html">sonar_hotspots()</a></code></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -189,6 +193,9 @@
 <span></span>
 <span><span class="co"># Technical debt index (A to E)</span></span>
 <span><span class="fu"><a href="reference/debt_index.html">debt_index</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Hotspots: the files to fix first, ranked by debt</span></span>
+<span><span class="fu"><a href="reference/sonar_hotspots.html">sonar_hotspots</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Quality Gate (pass/fail like SonarQube)</span></span>
 <span><span class="fu"><a href="reference/quality_gate.html">quality_gate</a></span><span class="op">(</span><span class="va">res</span>, coverage_min <span class="op">=</span> <span class="fl">80</span>, lint_errors_max <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>

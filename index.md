@@ -36,6 +36,7 @@ It orchestrates four proven tools:
 | New Code analysis | [`sonar_diff()`](https://ddotta.github.io/rsonar/reference/sonar_diff.md) |
 | Project history | [`sonar_trend()`](https://ddotta.github.io/rsonar/reference/sonar_trend.md) |
 | SARIF integration | [`export_sarif()`](https://ddotta.github.io/rsonar/reference/export_sarif.md) |
+| Hotspots / files to fix first | [`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md) |
 
 ## Installation
 
@@ -65,6 +66,9 @@ sonar_report(res, output = "quality.html")
 
 # Technical debt index (A to E)
 debt_index(res)
+
+# Hotspots: the files to fix first, ranked by debt
+sonar_hotspots(res)
 
 # Quality Gate (pass/fail like SonarQube)
 quality_gate(res, coverage_min = 80, lint_errors_max = 0)

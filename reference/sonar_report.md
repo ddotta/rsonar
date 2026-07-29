@@ -2,8 +2,10 @@
 
 Produces an interactive HTML report summarizing all results from
 [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md):
-consolidated metrics, lint issues with file navigation, style
-violations, test coverage and technical debt.
+consolidated metrics, a hotspots ranking of the files to fix first (see
+[`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md)),
+lint issues with file navigation, style violations, test coverage and
+technical debt.
 
 ## Usage
 

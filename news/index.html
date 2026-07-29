@@ -50,6 +50,16 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="rsonar-development-version">rsonar (development version)<a class="anchor" aria-label="anchor" href="#rsonar-development-version"></a></h2>
+<div class="section level4">
+<h4 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/sonar_hotspots.html">sonar_hotspots()</a></code>: ranks files by estimated technical debt so developers know which ones to fix first, similar to SonarQube’s “Code Smells” / hotspots view. Previously <code><a href="../reference/debt_index.html">debt_index()</a></code> only reported a single project-wide score with no per-file breakdown (<a href="https://github.com/ddotta/rsonar/issues/12" class="external-link">#12</a>)</li>
+<li>
+<code><a href="../reference/sonar_report.html">sonar_report()</a></code>: the HTML report now includes a “Hotspots - Files to Fix First” section (top 10 files by debt), placed right after the Technical Debt summary (<a href="https://github.com/ddotta/rsonar/issues/12" class="external-link">#12</a>)</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="rsonar-020-2026-04-20">rsonar 0.2.0 (2026-04-20)<a class="anchor" aria-label="anchor" href="#rsonar-020-2026-04-20"></a></h2>
 <div class="section level4">
 <h4 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h4>

@@ -6,6 +6,8 @@ Core analysis functions
 
 - [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)
   : Complete R Project Quality Analysis
+- [`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md)
+  : Rank Files by Technical Debt (Hotspots)
 
 ## Quality and Debt
 
@@ -76,3 +78,5 @@ Initialization and templates
   : Print a sonar_fix Object
 - [`summary(`*`<rsonar_result>`*`)`](https://ddotta.github.io/rsonar/reference/summary.rsonar_result.md)
   : Summarise an rsonar_result Object
+- [`print(`*`<rsonar_hotspots>`*`)`](https://ddotta.github.io/rsonar/reference/print.rsonar_hotspots.md)
+  : Print an rsonar_hotspots Object

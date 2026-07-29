@@ -1,5 +1,21 @@
 # Changelog
 
+## rsonar (development version)
+
+#### New features
+
+- [`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md):
+  ranks files by estimated technical debt so developers know which ones
+  to fix first, similar to SonarQube’s “Code Smells” / hotspots view.
+  Previously
+  [`debt_index()`](https://ddotta.github.io/rsonar/reference/debt_index.md)
+  only reported a single project-wide score with no per-file breakdown
+  ([\#12](https://github.com/ddotta/rsonar/issues/12))
+- [`sonar_report()`](https://ddotta.github.io/rsonar/reference/sonar_report.md):
+  the HTML report now includes a “Hotspots - Files to Fix First” section
+  (top 10 files by debt), placed right after the Technical Debt summary
+  ([\#12](https://github.com/ddotta/rsonar/issues/12))
+
 ## rsonar 0.2.0 (2026-04-20)
 
 #### New features
