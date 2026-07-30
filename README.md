@@ -2,8 +2,6 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/SSM-Agriculture/rsonar/workflows/R-CMD-check/badge.svg)](https://github.com/SSM-Agriculture/rsonar/actions)
-[![Codecov](https://codecov.io/gh/SSM-Agriculture/rsonar/branch/main/graph/badge.svg)](https://codecov.io/gh/SSM-Agriculture/rsonar)
-[![CRAN status](https://www.r-pkg.org/badges/version/rsonar)](https://CRAN.R-project.org/package=rsonar)
 <!-- badges: end -->
 
 ## Overview
