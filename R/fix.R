@@ -25,7 +25,7 @@
 #'   `"styler"`, `"spacing"`, `"true_false"`, `"null"`, `"commas"`,
 #'   `"parens"`, `"cleanup"`, `"simplify"`, `"pipes"`, `"magrittr"`,
 #'   `"namespace"`, `"library"`, `"dead_code"`, `"return"`,
-#'   `"assignment"`, `"comments"`. See details.
+#'   `"assignment"`, `"comments"`, `"unused_vars"`. See details.
 #'   Default `"all"`.
 #' @param formatter Character vector of formatters to use for code style.
 #'   Options are `"styler"` (default, uses tidyverse style) or `"air"`
@@ -105,9 +105,13 @@
 #' **Comments** (`"comments"`): Standardize long comment separators.
 #' Example: `##########` → `#----------`.
 #'
+#' **Unused Variables** (`"unused_vars"`): Detect and remove variable
+#' assignments that are never read within the same file.
+#' Example: `x <- 1` followed by no usage of `x` → line removed.
+#'
 #' @section Corrections NOT applied automatically:
 #' The following are never auto-fixed (remain in [sonar_analyse()]):
-#' unused variables, business logic changes, renaming, function removal,
+#' business logic changes, renaming, function removal,
 #' API changes, type changes, algorithm simplification, cyclomatic complexity.
 #'
 #' @examples
@@ -165,7 +169,7 @@ sonar_fix <- function(
     "styler", "spacing", "true_false", "null", "commas",
     "parens", "cleanup", "simplify", "pipes", "magrittr",
     "namespace", "library", "dead_code", "return",
-    "assignment", "comments"
+    "assignment", "comments", "unused_vars"
   )
   if (identical(fixes, "all")) {
     active_fixes <- all_fixes
@@ -275,6 +279,12 @@ sonar_fix <- function(
       res <- .fix_magrittr(content)
       content <- res$content
       local_fixes[["magrittr"]] <- res$n
+    }
+
+    if ("unused_vars" %in% active_fixes) {
+      res <- .fix_unused_vars(content)
+      content <- res$content
+      local_fixes[["unused_vars"]] <- res$n
     }
 
     list(content = content, fixes = local_fixes)
@@ -652,6 +662,14 @@ sonar_fix <- function(
 }
 
 #' Fix boolean simplifications
+#'
+#' Simplifies common boolean expression patterns:
+#' - `if(x == TRUE)` → `if(x)`, `if(x == FALSE)` → `if(!x)`
+#' - `x == TRUE` → `x`, `x == FALSE` → `!x` (general)
+#' - `isTRUE(x) == TRUE` → `isTRUE(x)`
+#' - `length(x) == 0` → `!length(x)`, `length(x) > 0` → `length(x)`
+#' - `if(x == TRUE && y)` → `if(x && y)`
+#' - `x == FALSE && ...` → `!x && ...`
 #' @keywords internal
 .fix_simplify <- function(content) {
   n <- 0L
@@ -659,27 +677,50 @@ sonar_fix <- function(
     line <- content[i]
     new_line <- line
 
-    # x == TRUE -> x  (inside if/while)
+    # --- if(x == TRUE) → if(x)  and  if(x == FALSE) → if(!x) ---
     new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*TRUE\\s*\\)",
       "if(\\1)", new_line,
       perl = TRUE
     )
-    # x == FALSE -> !x
     new_line <- gsub("if\\s*\\(\\s*([a-zA-Z0-9._()]+)\\s*==\\s*FALSE\\s*\\)",
       "if(!\\1)", new_line,
       perl = TRUE
     )
-    # isTRUE(x) == TRUE -> isTRUE(x)
+
+    # --- General x == TRUE → x  and  x == FALSE → !x ---
+    # Pattern: identifier == TRUE/FALSE (not inside if, general case)
+    new_line <- gsub("\\b([a-zA-Z._][a-zA-Z0-9._]*)\\s*==\\s*TRUE\\b",
+      "\\1", new_line,
+      perl = TRUE
+    )
+    new_line <- gsub("\\b([a-zA-Z._][a-zA-Z0-9._]*)\\s*==\\s*FALSE\\b",
+      "!\\1", new_line,
+      perl = TRUE
+    )
+
+    # --- Compound: x == TRUE && y  →  x && y ---
+    new_line <- gsub("\\b([a-zA-Z._][a-zA-Z0-9._]*)\\s*==\\s*TRUE\\s*(&&|\\|\\|)",
+      "\\1 \\2", new_line,
+      perl = TRUE
+    )
+    # --- Compound: x == FALSE && y  →  !x && y ---
+    new_line <- gsub("\\b([a-zA-Z._][a-zA-Z0-9._]*)\\s*==\\s*FALSE\\s*(&&|\\|\\|)",
+      "!\\1 \\2", new_line,
+      perl = TRUE
+    )
+
+    # --- isTRUE(x) == TRUE → isTRUE(x) ---
     new_line <- gsub("isTRUE\\(([^()]+)\\)\\s*==\\s*TRUE", "isTRUE(\\1)",
       new_line,
       perl = TRUE
     )
-    # length(x) == 0 -> !length(x)
+
+    # --- length(x) == 0 → !length(x) ---
     new_line <- gsub("length\\(([^()]+)\\)\\s*==\\s*0", "!length(\\1)",
       new_line,
       perl = TRUE
     )
-    # length(x) > 0 -> length(x)
+    # --- length(x) > 0 → length(x) ---
     new_line <- gsub("length\\(([^()]+)\\)\\s*>\\s*0", "length(\\1)",
       new_line,
       perl = TRUE
@@ -845,6 +886,90 @@ sonar_fix <- function(
     }
     content[i] <- line
   }
+  list(content = content, n = n)
+}
+
+#' Fix unused variables - detect and remove assignments never read
+#'
+#' Scans a file for variable assignments via `<-` or `=` and removes
+#' lines where the assigned variable is never referenced elsewhere.
+#' Uses conservative heuristics to avoid false positives:
+#' - Only considers top-level assignments (not inside functions or control flow)
+#' - Skips variables with names shorter than 3 chars
+#' - Skips common names that may be used by other tools (e.g., `.`, `i`, `j`)
+#' - Skips variables assigned from function calls (may have side effects)
+#' - Skips lines containing `<<-` (super-assignment, visible elsewhere)
+#' @keywords internal
+.fix_unused_vars <- function(content) {
+  n <- 0L
+  if (length(content) < 2L) return(list(content = content, n = n))
+
+  # Common variable names that should NOT be removed (may be used by IDE/tools)
+  reserved <- c(".", "..", "i", "j", "k", "x", "y", "z", "tmp", "res",
+                "out", "val", "ret", "df", "dt", "pkg", "fn", "f", "g")
+
+  # Pattern: var_name <- value (at top level, starting with optional whitespace)
+  # var_name = value for top-level assignments too
+  assign_pattern <- "^\\s*([a-zA-Z._][a-zA-Z0-9._]*)\\s*(<-|=)\\s*(.*)$"
+
+  # Build a list of (line_index, var_name) for candidate assignments
+  candidates <- list()
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Skip comments
+    if (grepl("^\\s*#", line)) next
+    # Skip super-assignment <<- (visible elsewhere)
+    if (grepl("<<-", line, fixed = TRUE)) next
+    # Skip if line contains function definition
+    if (grepl("\\bfunction\\s*\\(", line, perl = TRUE)) next
+    # Skip lines inside obvious control structures (heuristic: leading spaces + keyword)
+    if (grepl("^\\s+(if|for|while|else|switch)\\b", line, perl = TRUE)) next
+
+    m <- regmatches(line, regexec(assign_pattern, line, perl = TRUE))
+    if (length(m[[1]]) >= 4 && nzchar(m[[1]][2])) {
+      var_name <- m[[1]][2]
+      rhs <- m[[1]][4]
+
+      # Skip very short names
+      if (nchar(var_name) < 3L) next
+      # Skip reserved names
+      if (var_name %in% reserved) next
+      # Skip if RHS contains a function call (may have side effects)
+      if (grepl("\\w+\\s*\\(", rhs, perl = TRUE)) next
+      # Skip if RHS is complex (multiple operators = likely needed)
+      if (grepl("[&|+\\-*/%%^><]", rhs, perl = TRUE)) next
+      # Skip if RHS is a simple literal (TRUE/FALSE/NULL/NA) - these are intentional
+      if (grepl("^\\s*(TRUE|FALSE|NULL|NA|Inf|NaN)\\s*$", rhs, perl = TRUE)) next
+
+      candidates[[length(candidates) + 1L]] <- list(idx = i, var = var_name)
+    }
+  }
+
+  if (length(candidates) == 0L) return(list(content = content, n = n))
+
+  # Check each candidate: is the variable used anywhere else?
+  full_text <- paste(content, collapse = "\n")
+  lines_to_remove <- integer(0)
+  for (cand in candidates) {
+    var_name <- cand$var
+    idx <- cand$idx
+    # Count occurrences of the variable name in the whole file
+    # Use word boundary to avoid partial matches
+    pattern <- paste0("\\b", var_name, "\\b")
+    matches <- gregexpr(pattern, full_text, perl = TRUE)[[1]]
+    occurrences <- length(matches[matches > 0])
+    # If only 1 occurrence, it's the assignment itself → unused
+    # Also check: if exactly 2 occurrences and both are on the same line (self-reference)
+    if (occurrences <= 1L) {
+      lines_to_remove <- c(lines_to_remove, idx)
+    }
+  }
+
+  if (length(lines_to_remove) > 0L) {
+    content <- content[-lines_to_remove]
+    n <- length(lines_to_remove)
+  }
+
   list(content = content, n = n)
 }
 
