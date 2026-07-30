@@ -101,7 +101,7 @@ all categories. Available categories are:
 <code>"styler"</code>, <code>"spacing"</code>, <code>"true_false"</code>, <code>"null"</code>, <code>"commas"</code>,
 <code>"parens"</code>, <code>"cleanup"</code>, <code>"simplify"</code>, <code>"pipes"</code>, <code>"magrittr"</code>,
 <code>"namespace"</code>, <code>"library"</code>, <code>"dead_code"</code>, <code>"return"</code>,
-<code>"assignment"</code>, <code>"comments"</code>. See details.
+<code>"assignment"</code>, <code>"comments"</code>, <code>"unused_vars"</code>. See details.
 Default <code>"all"</code>.</p></dd>
 
 
@@ -215,13 +215,16 @@ Example: <code>return(x)</code> without unnecessary line breaks.</p>
 function calls.</p>
 <p><strong>Comments</strong> (<code>"comments"</code>): Standardize long comment separators.
 Example: <code>##########</code> → <code>#----------</code>.</p>
+<p><strong>Unused Variables</strong> (<code>"unused_vars"</code>): Detect and remove variable
+assignments that are never read within the same file.
+Example: <code>x &lt;- 1</code> followed by no usage of <code>x</code> → line removed.</p>
     </div>
     <div class="section level2">
     <h2 id="corrections-not-applied-automatically">Corrections NOT applied automatically<a class="anchor" aria-label="anchor" href="#corrections-not-applied-automatically"></a></h2>
 
 
 <p>The following are never auto-fixed (remain in <code><a href="sonar_analyse.html">sonar_analyse()</a></code>):
-unused variables, business logic changes, renaming, function removal,
+business logic changes, renaming, function removal,
 API changes, type changes, algorithm simplification, cyclomatic complexity.</p>
     </div>
     <div class="section level2">

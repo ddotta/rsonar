@@ -44,8 +44,8 @@ sonar_fix(
   categories. Available categories are: `"styler"`, `"spacing"`,
   `"true_false"`, `"null"`, `"commas"`, `"parens"`, `"cleanup"`,
   `"simplify"`, `"pipes"`, `"magrittr"`, `"namespace"`, `"library"`,
-  `"dead_code"`, `"return"`, `"assignment"`, `"comments"`. See details.
-  Default `"all"`.
+  `"dead_code"`, `"return"`, `"assignment"`, `"comments"`,
+  `"unused_vars"`. See details. Default `"all"`.
 
 - formatter:
 
@@ -183,13 +183,16 @@ calls.
 **Comments** (`"comments"`): Standardize long comment separators.
 Example: `##########` → `#----------`.
 
+**Unused Variables** (`"unused_vars"`): Detect and remove variable
+assignments that are never read within the same file. Example: `x <- 1`
+followed by no usage of `x` → line removed.
+
 ## Corrections NOT applied automatically
 
 The following are never auto-fixed (remain in
 [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)):
-unused variables, business logic changes, renaming, function removal,
-API changes, type changes, algorithm simplification, cyclomatic
-complexity.
+business logic changes, renaming, function removal, API changes, type
+changes, algorithm simplification, cyclomatic complexity.
 
 ## See also
 
