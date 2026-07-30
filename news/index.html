@@ -57,6 +57,17 @@
 <code><a href="../reference/sonar_hotspots.html">sonar_hotspots()</a></code>: ranks files by estimated technical debt so developers know which ones to fix first, similar to SonarQube’s “Code Smells” / hotspots view. Previously <code><a href="../reference/debt_index.html">debt_index()</a></code> only reported a single project-wide score with no per-file breakdown (<a href="https://github.com/ddotta/rsonar/issues/12" class="external-link">#12</a>)</li>
 <li>
 <code><a href="../reference/sonar_report.html">sonar_report()</a></code>: the HTML report now includes a “Hotspots - Files to Fix First” section (top 10 files by debt), placed right after the Technical Debt summary (<a href="https://github.com/ddotta/rsonar/issues/12" class="external-link">#12</a>)</li>
+<li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: new <code>unused_vars</code> category detects and removes variable assignments that are never read within the same file, using conservative heuristics to avoid false positives (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+<li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: new <code>duplicate_libs</code> category detects and removes duplicate <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> calls loading the same package multiple times (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-development-version">Improvements<a class="anchor" aria-label="anchor" href="#improvements-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: the <code>simplify</code> category now handles compound boolean expressions (<code>x == TRUE &amp;&amp; y</code> → <code>x &amp;&amp; y</code>, <code>x == FALSE \|\| y</code> → <code>!x \|\| y</code>) in addition to simple patterns (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+<li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: fixed a bug in <code>assignment</code> where the right-hand side of <code>y = 2</code> was lost during <code>=</code> → <code>&lt;-</code> conversion (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">

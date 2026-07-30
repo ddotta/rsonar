@@ -101,7 +101,8 @@ all categories. Available categories are:
 <code>"styler"</code>, <code>"spacing"</code>, <code>"true_false"</code>, <code>"null"</code>, <code>"commas"</code>,
 <code>"parens"</code>, <code>"cleanup"</code>, <code>"simplify"</code>, <code>"pipes"</code>, <code>"magrittr"</code>,
 <code>"namespace"</code>, <code>"library"</code>, <code>"dead_code"</code>, <code>"return"</code>,
-<code>"assignment"</code>, <code>"comments"</code>, <code>"unused_vars"</code>. See details.
+<code>"assignment"</code>, <code>"comments"</code>, <code>"unused_vars"</code>,
+<code>"duplicate_libs"</code>. See details.
 Default <code>"all"</code>.</p></dd>
 
 
@@ -218,6 +219,9 @@ Example: <code>##########</code> → <code>#----------</code>.</p>
 <p><strong>Unused Variables</strong> (<code>"unused_vars"</code>): Detect and remove variable
 assignments that are never read within the same file.
 Example: <code>x &lt;- 1</code> followed by no usage of <code>x</code> → line removed.</p>
+<p><strong>Duplicate Libraries</strong> (<code>"duplicate_libs"</code>): Detect and remove
+duplicate <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> calls loading the same package multiple times.
+Example: <code><a href="https://ggplot2.tidyverse.org" class="external-link">library(ggplot2)</a></code> x2 → second line removed.</p>
     </div>
     <div class="section level2">
     <h2 id="corrections-not-applied-automatically">Corrections NOT applied automatically<a class="anchor" aria-label="anchor" href="#corrections-not-applied-automatically"></a></h2>

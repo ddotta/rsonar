@@ -45,7 +45,7 @@ sonar_fix(
   `"true_false"`, `"null"`, `"commas"`, `"parens"`, `"cleanup"`,
   `"simplify"`, `"pipes"`, `"magrittr"`, `"namespace"`, `"library"`,
   `"dead_code"`, `"return"`, `"assignment"`, `"comments"`,
-  `"unused_vars"`. See details. Default `"all"`.
+  `"unused_vars"`, `"duplicate_libs"`. See details. Default `"all"`.
 
 - formatter:
 
@@ -186,6 +186,12 @@ Example: `##########` → `#----------`.
 **Unused Variables** (`"unused_vars"`): Detect and remove variable
 assignments that are never read within the same file. Example: `x <- 1`
 followed by no usage of `x` → line removed.
+
+**Duplicate Libraries** (`"duplicate_libs"`): Detect and remove
+duplicate [`library()`](https://rdrr.io/r/base/library.html) calls
+loading the same package multiple times. Example:
+[`library(ggplot2)`](https://ggplot2.tidyverse.org) x2 → second line
+removed.
 
 ## Corrections NOT applied automatically
 

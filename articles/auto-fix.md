@@ -36,7 +36,7 @@ fix <- sonar_fix(".", dry_run = FALSE)
 ## Fix categories
 
 [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md)
-groups corrections into 16 categories. Use the `fixes` parameter to
+groups corrections into 18 categories. Use the `fixes` parameter to
 select which ones to apply.
 
 ### Formatting (`"styler"` or `"air"`)
@@ -196,13 +196,48 @@ Standardizes long comment separators:
 #----------         # After
 ```
 
+### Unused Variables (`"unused_vars"`)
+
+Detects and removes variable assignments that are never read within the
+same file:
+
+``` r
+
+unused_value <- 42  # Before: variable never used elsewhere
+                     # After:  line removed
+```
+
+Uses conservative heuristics to avoid false positives: - Skips variables
+shorter than 3 characters - Skips common names (`i`, `j`, `tmp`, etc.) -
+Skips assignments from function calls (may have side effects) - Skips
+`<<-` super-assignments (visible elsewhere)
+
+⚠️ **Enabled in `fixes = "all"`** — use with `dry_run = TRUE` first to
+review what would be removed.
+
+### Duplicate Libraries (`"duplicate_libs"`)
+
+Detects and removes duplicate
+[`library()`](https://rdrr.io/r/base/library.html) calls loading the
+same package multiple times:
+
+``` r
+
+library(ggplot2)    # Before: first call (kept)
+library(ggplot2)    # Before: duplicate (removed)
+library(arrow)      # Before: different package (kept)
+
+library(ggplot2)    # After:  only one call remains
+library(arrow)
+```
+
 ### Report-only categories
 
 These categories detect issues but do **not** modify files:
 
 - **`"library"`** — Detects
   [`library(x)`](https://rdrr.io/r/base/library.html) calls that may be
-  unused
+  unused (also counts duplicates)
 - **`"namespace"`** — Suggests converting `library(x) + f()` to `x::f()`
 - **`"dead_code"`** — Detects expressions without effect (e.g. `1+1`
   standalone)
@@ -271,7 +306,9 @@ Example output:
     "styler": 205,
     "spacing": 81,
     "true_false": 9,
-    "pipes": 5
+    "pipes": 5,
+    "duplicate_libs": 1,
+    "unused_vars": 3
   }
 }
 ```
@@ -321,7 +358,6 @@ The following are never auto-fixed and remain in
 [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md)
 for developer review:
 
-- Unused variables
 - Business logic changes
 - Renaming
 - Function removal
@@ -339,7 +375,7 @@ for developer review:
 | Default mode | Analysis | Dry-run preview |
 | Pre-commit usage | Check quality | Auto-format code |
 | CI usage | Gate + Reports | Auto-correct + MR/PR |
-| Categories | ~20 rule types | 16 fix families |
+| Categories | ~20 rule types | 18 fix families |
 
 ## See also
 

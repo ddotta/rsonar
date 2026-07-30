@@ -15,6 +15,28 @@
   the HTML report now includes a “Hotspots - Files to Fix First” section
   (top 10 files by debt), placed right after the Technical Debt summary
   ([\#12](https://github.com/ddotta/rsonar/issues/12))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  new `unused_vars` category detects and removes variable assignments
+  that are never read within the same file, using conservative
+  heuristics to avoid false positives
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  new `duplicate_libs` category detects and removes duplicate
+  [`library()`](https://rdrr.io/r/base/library.html) calls loading the
+  same package multiple times
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
+
+#### Improvements
+
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  the `simplify` category now handles compound boolean expressions
+  (`x == TRUE && y` → `x && y`, `x == FALSE \|\| y` → `!x \|\| y`) in
+  addition to simple patterns
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  fixed a bug in `assignment` where the right-hand side of `y = 2` was
+  lost during `=` → `<-` conversion
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
 
 ## rsonar 0.2.0 (2026-04-20)
 
