@@ -18,6 +18,10 @@
 #'   Default `"(\\.git|\\.ci|renv|packrat|vendor|node_modules|_snaps)"`.
 #' @param lintr_config Path to a custom `.lintr` file. If `NULL`,
 #'   rsonar automatically looks for `.lintr` in `path`.
+#' @param style_timeout Per-file timeout in seconds for styler checks.
+#'   Prevents `styler::style_file()` from blocking indefinitely in CI
+#'   on files with parsing errors. Default `30` seconds. Set to `Inf`
+#'   to disable timeout.
 #' @param verbose Logical. Show progress in the console. Default `TRUE`.
 #'
 #' @return An object of class `rsonar_result` containing:
@@ -50,12 +54,13 @@
 sonar_analyse <- function(
     path = ".",
     include_lint = TRUE,
-    include_style = TRUE,
-    include_coverage = fs::dir_exists(fs::path(path, "tests")),
-    include_goodpractice = fs::file_exists(fs::path(path, "DESCRIPTION")),
-    exclude_pattern = "(\\.git|\\.ci|renv|packrat|vendor|node_modules|_snaps)",
-    lintr_config = NULL,
-    verbose = TRUE) {
+  include_style = TRUE,
+  include_coverage = fs::dir_exists(fs::path(path, "tests")),
+  include_goodpractice = fs::file_exists(fs::path(path, "DESCRIPTION")),
+  exclude_pattern = "(\\.git|\\.ci|renv|packrat|vendor|node_modules|_snaps)",
+  lintr_config = NULL,
+  style_timeout = 30,
+  verbose = TRUE) {
 
   path <- fs::path_abs(path)
 
@@ -84,7 +89,7 @@ sonar_analyse <- function(
   style_results <- NULL
   if (include_style && length(r_files) > 0) {
     .msg("Style checking (styler)...")
-    style_results <- .run_style(r_files)
+    style_results <- .run_style(r_files, timeout = style_timeout)
   }
 
   # --- Coverage ---
@@ -152,10 +157,14 @@ sonar_analyse <- function(
   })
 }
 
-.run_style <- function(r_files) {
+.run_style <- function(r_files, timeout = 30) {
   results <- lapply(r_files, function(f) {
     tryCatch({
-      # Keep style checks lightweight: do not require roxygen2 for examples.
+      # Set a per-file timeout to prevent styler from blocking indefinitely.
+      # styler may hang on files with parsing errors in non-interactive CI.
+      setTimeLimit(elapsed = timeout, transient = TRUE)
+      on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
+
       res <- styler::style_file(
         as.character(f),
         dry = "on",
@@ -167,6 +176,12 @@ sonar_analyse <- function(
         stringsAsFactors = FALSE
       )
     }, error = function(e) {
+      if (grepl("reached elapsed time", conditionMessage(e))) {
+        cli::cli_warn(c(
+          "!" = "Style check timed out after {.val {timeout}s} for {.path {f}}",
+          "i" = "The file will be skipped. Consider using {.code formatter = \"air\"} instead."
+        ))
+      }
       data.frame(file = as.character(f), changed = NA, stringsAsFactors = FALSE)
     })
   })

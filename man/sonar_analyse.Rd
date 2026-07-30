@@ -12,6 +12,7 @@ sonar_analyse(
   include_goodpractice = fs::file_exists(fs::path(path, "DESCRIPTION")),
   exclude_pattern = "(\\\\.git|\\\\.ci|renv|packrat|vendor|node_modules|_snaps)",
   lintr_config = NULL,
+  style_timeout = 30,
   verbose = TRUE
 )
 }
@@ -35,6 +36,11 @@ Default \code{"(\\\\.git|\\\\.ci|renv|packrat|vendor|node_modules|_snaps)"}.}
 
 \item{lintr_config}{Path to a custom \code{.lintr} file. If \code{NULL},
 rsonar automatically looks for \code{.lintr} in \code{path}.}
+
+\item{style_timeout}{Per-file timeout in seconds for styler checks.
+Prevents \code{styler::style_file()} from blocking indefinitely in CI
+on files with parsing errors. Default \code{30} seconds. Set to \code{Inf}
+to disable timeout.}
 
 \item{verbose}{Logical. Show progress in the console. Default \code{TRUE}.}
 }

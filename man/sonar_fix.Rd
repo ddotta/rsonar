@@ -22,7 +22,7 @@ sonar_fix(
 \arguments{
 \item{path}{Path to the R project or directory. Default \code{"."}.}
 
-\item{include}{Glob pattern for files to include. Default \code{"\\\\.[Rr]$"}.}
+\item{include}{Glob pattern for files to include. Default \verb{"\\\\\\\\.\[Rr\]$"}.}
 
 \item{exclude}{Character vector of directories or patterns to exclude.
 Default \code{c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules")}.}
@@ -32,7 +32,8 @@ all categories. Available categories are:
 \code{"styler"}, \code{"spacing"}, \code{"true_false"}, \code{"null"}, \code{"commas"},
 \code{"parens"}, \code{"cleanup"}, \code{"simplify"}, \code{"pipes"}, \code{"magrittr"},
 \code{"namespace"}, \code{"library"}, \code{"dead_code"}, \code{"return"},
-\code{"assignment"}, \code{"comments"}, \code{"unused_vars"}, \code{"duplicate_libs"}.
+\code{"assignment"}, \code{"comments"}, \code{"unused_vars"},
+\code{"duplicate_libs"}. See details.
 Default \code{"all"}.}
 
 \item{formatter}{Character vector of formatters to use for code style.
@@ -75,16 +76,18 @@ An object of class \code{sonar_fix} containing:
 Automatically fixes common R code quality issues across multiple categories:
 formatting, trivial transformations, cleanup, simplifications, pipes,
 namespace usage, dead code detection, and more.
-
+}
+\details{
 Unlike \code{\link[=sonar_analyse]{sonar_analyse()}} which is read-only, \code{sonar_fix()} \strong{modifies files}
 in the project. Always run with \code{dry_run = TRUE} first (default) to preview
 changes before applying them.
 }
 \section{Fix categories}{
 
+
 \strong{Formatting} (\code{"styler"} or \code{"air"}): Indentation, spacing, parentheses,
 alignment, line breaks, pipe formatting, braces, blank lines.
-Equivalent to \code{styler::style_dir()} or \code{air format}.
+Equivalent to \code{styler::style_dir()} or \verb{air format}.
 
 \strong{Spacing} (\code{"spacing"}): Fix missing spaces around operators,
 commas, and assignments. Example: \code{x<-1} → \code{x <- 1}.
@@ -104,9 +107,9 @@ empty comment blocks, multiple blank lines, trailing whitespace,
 ensure single trailing newline.
 
 \strong{Simplify} (\code{"simplify"}): Simplify boolean expressions.
-Example: \code{if(x==TRUE)} → \code{if(x)}, \code{length(x)==0} → \code{!length(x)}.
+Example: \verb{if(x==TRUE)} → \verb{if(x)}, \code{length(x)==0} → \code{!length(x)}.
 
-\strong{Pipes} (\code{"pipes"}): Convert \verb{\%>\%} to \code{|>} (native pipe).
+\strong{Pipes} (\code{"pipes"}): Convert \verb{\%>\%} to \verb{|>} (native pipe).
 Example: \code{x \%>\% f()} → \code{x |> f()}.
 
 \strong{Magrittr} (\code{"magrittr"}): Convert assignment pipes \verb{\%<>\%} to
@@ -124,7 +127,7 @@ equivalent base R.
 \strong{Return} (\code{"return"}): Fix formatting of \code{return()} calls.
 Example: \code{return(x)} without unnecessary line breaks.
 
-\strong{Assignment} (\code{"assignment"}): Convert \code{=} to \code{<-} outside of
+\strong{Assignment} (\code{"assignment"}): Convert \code{=} to \verb{<-} outside of
 function calls.
 
 \strong{Comments} (\code{"comments"}): Standardize long comment separators.

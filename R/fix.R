@@ -488,7 +488,7 @@ sonar_fix <- function(
 # ============================================================================
 
 #' Fix spacing around operators and assignments
-#' @keywords internal
+#' @noRd
 .fix_spacing <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -513,7 +513,7 @@ sonar_fix <- function(
 }
 
 #' Fix T/F -> TRUE/FALSE
-#' @keywords internal
+#' @noRd
 .fix_true_false <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -534,7 +534,7 @@ sonar_fix <- function(
 }
 
 #' Fix NULL assignment
-#' @keywords internal
+#' @noRd
 .fix_null <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -555,7 +555,7 @@ sonar_fix <- function(
 }
 
 #' Fix commas - add space after
-#' @keywords internal
+#' @noRd
 .fix_commas <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -572,7 +572,7 @@ sonar_fix <- function(
 }
 
 #' Fix unnecessary parentheses
-#' @keywords internal
+#' @noRd
 .fix_parens <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -589,7 +589,7 @@ sonar_fix <- function(
 }
 
 #' Fix cleanup: trailing whitespace, multiple blank lines, comments, EOF
-#' @keywords internal
+#' @noRd
 .fix_cleanup <- function(content) {
   n <- 0L
 
@@ -632,7 +632,7 @@ sonar_fix <- function(
 }
 
 #' Remove double separator comment lines
-#' @keywords internal
+#' @noRd
 .rm_double_comment <- function(content) {
   # Remove lines that are ONLY #### with optional trailing whitespace
   # But keep single #---- lines for structure
@@ -654,7 +654,7 @@ sonar_fix <- function(
 }
 
 #' Remove empty comment blocks
-#' @keywords internal
+#' @noRd
 .rm_empty_comment <- function(content) {
   # Remove lines that are just ### (no meaningful text)
   pattern <- "^#\\s*$"
@@ -681,7 +681,7 @@ sonar_fix <- function(
 #' - `length(x) == 0` → `!length(x)`, `length(x) > 0` → `length(x)`
 #' - `if(x == TRUE && y)` → `if(x && y)`
 #' - `x == FALSE && ...` → `!x && ...`
-#' @keywords internal
+#' @noRd
 .fix_simplify <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -747,7 +747,7 @@ sonar_fix <- function(
 }
 
 #' Fix pipes: %>% -> |>
-#' @keywords internal
+#' @noRd
 .fix_pipes <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -764,7 +764,7 @@ sonar_fix <- function(
 }
 
 #' Fix assignment pipe %<>%
-#' @keywords internal
+#' @noRd
 .fix_magrittr <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -785,7 +785,7 @@ sonar_fix <- function(
 }
 
 #' Detect library usage and suggest namespace conversion
-#' @keywords internal
+#' @noRd
 .detect_library <- function(file_path, content) {
   ns_fixes <- 0L
   unused_libs <- 0L
@@ -820,7 +820,7 @@ sonar_fix <- function(
 }
 
 #' Detect dead code
-#' @keywords internal
+#' @noRd
 .detect_dead_code <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -836,7 +836,7 @@ sonar_fix <- function(
 }
 
 #' Fix return() formatting
-#' @keywords internal
+#' @noRd
 .fix_return <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -858,7 +858,7 @@ sonar_fix <- function(
 }
 
 #' Fix assignment: = -> <- outside function calls
-#' @keywords internal
+#' @noRd
 .fix_assignment <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -885,7 +885,7 @@ sonar_fix <- function(
 }
 
 #' Fix comment separators
-#' @keywords internal
+#' @noRd
 .fix_comments <- function(content) {
   n <- 0L
   for (i in seq_along(content)) {
@@ -909,7 +909,7 @@ sonar_fix <- function(
 #'
 #' Scans a file for repeated `library()` calls loading the same package
 #' and removes duplicate occurrences, keeping only the first one.
-#' @keywords internal
+#' @noRd
 .fix_duplicate_libs <- function(content) {
   n <- 0L
 
@@ -952,7 +952,7 @@ sonar_fix <- function(
 #' - Skips common names that may be used by other tools (e.g., `.`, `i`, `j`)
 #' - Skips variables assigned from function calls (may have side effects)
 #' - Skips lines containing `<<-` (super-assignment, visible elsewhere)
-#' @keywords internal
+#' @noRd
 .fix_unused_vars <- function(content) {
   n <- 0L
   if (length(content) < 2L) return(list(content = content, n = n))
@@ -1032,7 +1032,7 @@ sonar_fix <- function(
 # ============================================================================
 
 #' Build the fix result object
-#' @keywords internal
+#' @noRd
 .make_fix_result <- function(path, scanned, modified, fixes,
                              dry_run, start_time, verbose) {
   elapsed <- round(as.numeric(difftime(Sys.time(), start_time, units = "secs")), 1)

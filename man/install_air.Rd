@@ -7,37 +7,18 @@
 install_air(version = "latest", force = FALSE)
 }
 \arguments{
-\item{version}{Specific version to install (e.g., \code{"v0.1.0"}).
-If \code{"latest"} (default), the latest stable release is installed.}
+\item{version}{Specific version or \code{"latest"}. Default \code{"latest"}.}
 
-\item{force}{Logical. If \code{TRUE}, reinstall even if \code{air} is already
-present. Default \code{FALSE}.}
+\item{force}{Logical. Reinstall even if already present. Default \code{FALSE}.}
 }
 \value{
-The path to the installed \code{air} binary (invisibly).
+The path to the installed binary (invisibly).
 }
 \description{
 Downloads and installs the \code{air} R code formatter binary from the
 official GitHub releases. Supports Linux (x86_64, aarch64),
 macOS (Intel and Apple Silicon), and Windows.
 }
-\details{
-On Linux and macOS, the binary is installed to \verb{~/.local/bin/air}.
-On Windows, it is installed to \verb{~/bin/air.exe}.
-}
-\examples{
-\dontrun{
-# Install the latest version
-install_air()
-
-# Install a specific version
-install_air(version = "v0.1.0")
-
-# Reinstall even if already present
-install_air(force = TRUE)
-}
-
-}
 \seealso{
-\code{\link[=sonar_fix]{sonar_fix()}} to use air for auto-fixing R code.
+\code{\link[=sonar_fix]{sonar_fix()}}
 }
