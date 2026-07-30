@@ -73,6 +73,7 @@ packaging best practices (goodpractice), then returns an
 <span>  include_goodpractice <span class="op">=</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_access.html" class="external-link">file_exists</a></span><span class="op">(</span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path.html" class="external-link">path</a></span><span class="op">(</span><span class="va">path</span>, <span class="st">"DESCRIPTION"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  exclude_pattern <span class="op">=</span> <span class="st">"(\\.git|\\.ci|renv|packrat|vendor|node_modules|_snaps)"</span>,</span>
 <span>  lintr_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  style_timeout <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -113,6 +114,13 @@ Default <code>"(\\.git|\\.ci|renv|packrat|vendor|node_modules|_snaps)"</code>.</
 <dt id="arg-lintr-config">lintr_config<a class="anchor" aria-label="anchor" href="#arg-lintr-config"></a></dt>
 <dd><p>Path to a custom <code>.lintr</code> file. If <code>NULL</code>,
 rsonar automatically looks for <code>.lintr</code> in <code>path</code>.</p></dd>
+
+
+<dt id="arg-style-timeout">style_timeout<a class="anchor" aria-label="anchor" href="#arg-style-timeout"></a></dt>
+<dd><p>Per-file timeout in seconds for styler checks.
+Prevents <code><a href="https://styler.r-lib.org/reference/style_file.html" class="external-link">styler::style_file()</a></code> from blocking indefinitely in CI
+on files with parsing errors. Default <code>30</code> seconds. Set to <code>Inf</code>
+to disable timeout.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
