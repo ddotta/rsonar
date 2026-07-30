@@ -109,6 +109,26 @@ The HTML report contains:
 - **Lint issues list** with severity, file, line and rule
 - **Improperly formatted files** detected by styler
 - **Technical debt breakdown** by category and in minutes
+- **Hotspots** — the files that concentrate the most debt, ranked
+
+### 3bis. Prioritize with sonar_hotspots()
+
+Once you know *how much* debt you have,
+[`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md)
+tells you *where* to start fixing it — the files with the highest
+estimated remediation cost:
+
+``` r
+
+sonar_hotspots(res, n = 10)
+```
+
+    ── rsonar Hotspots — Files to Fix First ──────────────────────
+    1. R/legacy_module.R — 145 min (2 error(s), 3 warning(s), needs re-format, coverage 42%)
+    2. R/utils.R — 60 min (0 error(s), 3 warning(s), 4 style lint(s))
+
+This is the same information already shown in the HTML report’s Hotspots
+section, available directly in the console for a quick check.
 
 ### 4. Check the Quality Gate
 
