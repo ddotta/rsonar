@@ -2,87 +2,171 @@
 % Please edit documentation in R/fix.R
 \name{sonar_fix}
 \alias{sonar_fix}
-\title{Auto-Fix Code Quality Issues with air}
+\title{Auto-Fix R Code Quality Issues}
 \usage{
 sonar_fix(
   path = ".",
-  files = NULL,
-  create_mr = FALSE,
-  branch_name = NULL,
-  commit_message = "style: auto-format code with air via rsonar",
-  mr_title = "Auto-fix: code style improvements via rsonar",
-  dry_run = FALSE,
-  verbose = TRUE
+  include = "\\\\.[Rr]$",
+  exclude = c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules"),
+  fixes = "all",
+  formatter = c("styler", "air"),
+  dry_run = TRUE,
+  backup = FALSE,
+  parallel = TRUE,
+  n_cores = parallel::detectCores(),
+  report = TRUE,
+  report_file = "sonar-fixes.json",
+  verbose = interactive()
 )
 }
 \arguments{
-\item{path}{Path to the R project or directory. Default current directory.}
+\item{path}{Path to the R project or directory. Default \code{"."}.}
 
-\item{files}{Character vector of specific R files to fix. If \code{NULL}
-(default), all R files in \code{path} are processed.}
+\item{include}{Glob pattern for files to include. Default \code{"\\\\.[Rr]$"}.}
 
-\item{create_mr}{Logical. If \code{TRUE}, attempts to create a git branch,
-commit changes, push, and open a Merge Request (GitLab CI) or
-Pull Request (GitHub Actions). Requires \code{git} and appropriate CI
-environment variables. Default \code{FALSE}.}
+\item{exclude}{Character vector of directories or patterns to exclude.
+Default \code{c("renv", ".git", ".Rproj.user", "packrat", "vendor", "node_modules")}.}
 
-\item{branch_name}{Name of the branch to create. If \code{NULL}, an
-automatic name \code{"rsonar/auto-fix-{timestamp}"} is generated.
-Default \code{NULL}.}
+\item{fixes}{Character vector of fix categories to apply, or \code{"all"} for
+all categories. Available categories are:
+\code{"styler"}, \code{"spacing"}, \code{"true_false"}, \code{"null"}, \code{"commas"},
+\code{"parens"}, \code{"cleanup"}, \code{"simplify"}, \code{"pipes"}, \code{"magrittr"},
+\code{"namespace"}, \code{"library"}, \code{"dead_code"}, \code{"return"},
+\code{"assignment"}, \code{"comments"}, \code{"unused_vars"}, \code{"duplicate_libs"}.
+Default \code{"all"}.}
 
-\item{commit_message}{Commit message. Default
-\code{"style: auto-format code with air via rsonar"}.}
+\item{formatter}{Character vector of formatters to use for code style.
+Options are \code{"styler"} (default, uses tidyverse style) or \code{"air"}
+(Posit's fast formatter). Default \code{c("styler")}.}
 
-\item{mr_title}{Title of the MR / PR. Default
-\code{"Auto-fix: code style improvements via rsonar"}.}
+\item{dry_run}{Logical. If \code{TRUE}, only check what would be changed without
+modifying files. Default \code{TRUE}.}
 
-\item{dry_run}{Logical. If \code{TRUE}, only check what would be changed
-without modifying files (uses \verb{air format --check}).
-Default \code{FALSE}.}
+\item{backup}{Logical. If \code{TRUE}, create \code{.bak} copies of files before
+modifying them. Default \code{FALSE}.}
+
+\item{parallel}{Logical. Use parallel processing for multiple files.
+Default \code{TRUE}.}
+
+\item{n_cores}{Number of cores for parallel processing. Default
+\code{parallel::detectCores()}.}
+
+\item{report}{Logical. Generate a JSON report file. Default \code{TRUE}.}
+
+\item{report_file}{Path to the JSON report. Default \code{"sonar-fixes.json"}.}
 
 \item{verbose}{Logical. Show progress and result summary.
-Default \code{TRUE}.}
+Default \code{interactive()}.}
 }
 \value{
-An object of class \code{rsonar_fix} containing:
+An object of class \code{sonar_fix} containing:
 \describe{
-\item{\code{files_changed}}{Character vector of modified file paths}
-\item{\code{diff_summary}}{Summary string from air output}
-\item{\code{branch}}{Name of the created branch (if \code{create_mr = TRUE})}
-\item{\code{mr_url}}{URL of the created MR/PR (if applicable)}
-\item{\code{dry_run}}{Whether dry-run mode was used}
+\item{\code{files_scanned}}{Total number of R files examined}
+\item{\code{files_modified}}{Number of files that were actually modified}
+\item{\code{fixes_applied}}{Named list with counts of each fix type applied}
+\item{\code{fixes_skipped}}{Named list of fix types that were skipped}
+\item{\code{elapsed}}{Duration of the fix run}
+\item{\code{report}}{Console-friendly summary text}
 \item{\code{path}}{Analyzed project path}
-\item{\code{timestamp}}{Execution timestamp}
+\item{\code{timestamp}}{Execution date/time}
 }
 }
 \description{
-Runs \code{air} (Posit's R code formatter) on R files to automatically fix
-code style and lint issues. Optionally creates a git branch and pushes
-changes for review via Merge Request (GitLab) or Pull Request (GitHub).
+Automatically fixes common R code quality issues across multiple categories:
+formatting, trivial transformations, cleanup, simplifications, pipes,
+namespace usage, dead code detection, and more.
+
+Unlike \code{\link[=sonar_analyse]{sonar_analyse()}} which is read-only, \code{sonar_fix()} \strong{modifies files}
+in the project. Always run with \code{dry_run = TRUE} first (default) to preview
+changes before applying them.
 }
-\details{
-\code{air} is a fast, opinionated R code formatter developed by Posit.
-It reformats R code according to modern style conventions.
-See \url{https://github.com/posit-dev/air} for installation instructions.
+\section{Fix categories}{
+
+\strong{Formatting} (\code{"styler"} or \code{"air"}): Indentation, spacing, parentheses,
+alignment, line breaks, pipe formatting, braces, blank lines.
+Equivalent to \code{styler::style_dir()} or \code{air format}.
+
+\strong{Spacing} (\code{"spacing"}): Fix missing spaces around operators,
+commas, and assignments. Example: \code{x<-1} → \code{x <- 1}.
+
+\strong{TRUE/FALSE} (\code{"true_false"}): Replace \code{T}/\code{F} with \code{TRUE}/\code{FALSE}.
+
+\strong{NULL} (\code{"null"}): Replace \code{x=NULL} with \code{x <- NULL}.
+
+\strong{Commas} (\code{"commas"}): Add spaces after commas. Example:
+\code{c(1,2,3)} → \code{c(1, 2, 3)}.
+
+\strong{Parentheses} (\code{"parens"}): Remove unnecessary parentheses.
+Example: \code{return((x))} → \code{return(x)}.
+
+\strong{Cleanup} (\code{"cleanup"}): Remove double comment lines (\verb{#####}),
+empty comment blocks, multiple blank lines, trailing whitespace,
+ensure single trailing newline.
+
+\strong{Simplify} (\code{"simplify"}): Simplify boolean expressions.
+Example: \code{if(x==TRUE)} → \code{if(x)}, \code{length(x)==0} → \code{!length(x)}.
+
+\strong{Pipes} (\code{"pipes"}): Convert \verb{\%>\%} to \code{|>} (native pipe).
+Example: \code{x \%>\% f()} → \code{x |> f()}.
+
+\strong{Magrittr} (\code{"magrittr"}): Convert assignment pipes \verb{\%<>\%} to
+equivalent base R.
+
+\strong{Namespace} (\code{"namespace"}): Convert \code{library(x)} + \code{f()} to
+\code{x::f()}.
+
+\strong{Library} (\code{"library"}): Detect unused \code{library()} calls
+(report only, not applied automatically).
+
+\strong{Dead code} (\code{"dead_code"}): Remove expressions without effect
+(e.g. \code{1+1} standalone). Default: report only.
+
+\strong{Return} (\code{"return"}): Fix formatting of \code{return()} calls.
+Example: \code{return(x)} without unnecessary line breaks.
+
+\strong{Assignment} (\code{"assignment"}): Convert \code{=} to \code{<-} outside of
+function calls.
+
+\strong{Comments} (\code{"comments"}): Standardize long comment separators.
+Example: \verb{##########} → \verb{#----------}.
+
+\strong{Unused Variables} (\code{"unused_vars"}): Detect and remove variable
+assignments that are never read within the same file.
+Example: \code{x <- 1} followed by no usage of \code{x} → line removed.
+
+\strong{Duplicate Libraries} (\code{"duplicate_libs"}): Detect and remove
+duplicate \code{library()} calls loading the same package multiple times.
+Example: \code{library(ggplot2)} x2 → second line removed.
 }
+
+\section{Corrections NOT applied automatically}{
+
+The following are never auto-fixed (remain in \code{\link[=sonar_analyse]{sonar_analyse()}}):
+business logic changes, renaming, function removal,
+API changes, type changes, algorithm simplification, cyclomatic complexity.
+}
+
 \examples{
 \dontrun{
-# Check what would be changed (no file modification)
+# Preview changes (no files modified)
 fix <- sonar_fix(".", dry_run = TRUE)
 print(fix)
 
-# Auto-fix all R files in the current project
-fix <- sonar_fix(".")
+# Apply all fixes
+fix <- sonar_fix(".", dry_run = FALSE)
 
-# Fix specific files only
-fix <- sonar_fix(".", files = c("R/analyse.R", "R/export.R"))
+# Apply only formatting and spacing fixes
+fix <- sonar_fix(".", fixes = c("spacing", "styler"))
 
-# Auto-fix and create a Merge Request (in GitLab CI)
-fix <- sonar_fix(".", create_mr = TRUE)
+# Use air formatter instead of styler
+fix <- sonar_fix(".", formatter = "air")
+
+# Backup files before modifying
+fix <- sonar_fix(".", backup = TRUE, dry_run = FALSE)
 }
 
 }
 \seealso{
-\code{\link[=sonar_analyse]{sonar_analyse()}} for code quality analysis,
+\code{\link[=sonar_analyse]{sonar_analyse()}} for read-only analysis,
 \code{\link[=install_air]{install_air()}} to install the air formatter.
 }

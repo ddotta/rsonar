@@ -25,7 +25,8 @@
 #'   `"styler"`, `"spacing"`, `"true_false"`, `"null"`, `"commas"`,
 #'   `"parens"`, `"cleanup"`, `"simplify"`, `"pipes"`, `"magrittr"`,
 #'   `"namespace"`, `"library"`, `"dead_code"`, `"return"`,
-#'   `"assignment"`, `"comments"`, `"unused_vars"`. See details.
+#'   `"assignment"`, `"comments"`, `"unused_vars"`,
+#'   `"duplicate_libs"`. See details.
 #'   Default `"all"`.
 #' @param formatter Character vector of formatters to use for code style.
 #'   Options are `"styler"` (default, uses tidyverse style) or `"air"`
@@ -109,6 +110,10 @@
 #' assignments that are never read within the same file.
 #' Example: `x <- 1` followed by no usage of `x` → line removed.
 #'
+#' **Duplicate Libraries** (`"duplicate_libs"`): Detect and remove
+#' duplicate `library()` calls loading the same package multiple times.
+#' Example: `library(ggplot2)` x2 → second line removed.
+#'
 #' @section Corrections NOT applied automatically:
 #' The following are never auto-fixed (remain in [sonar_analyse()]):
 #' business logic changes, renaming, function removal,
@@ -169,7 +174,7 @@ sonar_fix <- function(
     "styler", "spacing", "true_false", "null", "commas",
     "parens", "cleanup", "simplify", "pipes", "magrittr",
     "namespace", "library", "dead_code", "return",
-    "assignment", "comments", "unused_vars"
+    "assignment", "comments", "unused_vars", "duplicate_libs"
   )
   if (identical(fixes, "all")) {
     active_fixes <- all_fixes
@@ -285,6 +290,12 @@ sonar_fix <- function(
       res <- .fix_unused_vars(content)
       content <- res$content
       local_fixes[["unused_vars"]] <- res$n
+    }
+
+    if ("duplicate_libs" %in% active_fixes) {
+      res <- .fix_duplicate_libs(content)
+      content <- res$content
+      local_fixes[["duplicate_libs"]] <- res$n
     }
 
     list(content = content, fixes = local_fixes)
@@ -852,11 +863,16 @@ sonar_fix <- function(
   n <- 0L
   for (i in seq_along(content)) {
     line <- content[i]
-    # Simple: replace = with <- when it's not inside function args
-    # This is heuristic; proper handling needs AST parsing
-    # Pattern: identifier = value (not preceded by , or ()
-    new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*(?!NULL|TRUE|FALSE|NA)",
-      "\\1\\2 <- ", line,
+    # Skip comments
+    if (grepl("^\\s*#", line)) next
+    # Skip lines inside function calls (heuristic: contain , before =)
+    # Skip lines where = is inside a function call (like f(a = 1))
+    if (grepl("\\w+\\([^)]*=\\s*", line, perl = TRUE)) next
+
+    # Replace top-level = with <- (but not ==, !=, <=, >=)
+    # Pattern: identifier = value (capture the RHS too)
+    new_line <- gsub("^(\\s*)([a-zA-Z._][a-zA-Z0-9._]*)\\s*=\\s*(?!NULL\\b|TRUE\\b|FALSE\\b|NA\\b|function\\s*\\()(.+)$",
+      "\\1\\2 <- \\3", line,
       perl = TRUE
     )
     if (new_line != line) {
@@ -886,6 +902,43 @@ sonar_fix <- function(
     }
     content[i] <- line
   }
+  list(content = content, n = n)
+}
+
+#' Fix duplicate library() calls - remove duplicate library() statements
+#'
+#' Scans a file for repeated `library()` calls loading the same package
+#' and removes duplicate occurrences, keeping only the first one.
+#' @keywords internal
+.fix_duplicate_libs <- function(content) {
+  n <- 0L
+
+  # Find all library() calls with their line indices
+  lib_pattern <- '^\\s*library\\s*\\(\\s*[\"\\\']?([a-zA-Z0-9._]+)[\"\\\']?\\s*\\)'
+  seen <- character(0)
+  lines_to_remove <- integer(0)
+
+  for (i in seq_along(content)) {
+    line <- content[i]
+    # Skip comments
+    if (grepl("^\\s*#", line)) next
+
+    m <- regmatches(line, regexec(lib_pattern, line, perl = TRUE))
+    if (length(m[[1]]) >= 2 && nzchar(m[[1]][2])) {
+      pkg <- m[[1]][2]
+      if (pkg %in% seen) {
+        lines_to_remove <- c(lines_to_remove, i)
+      } else {
+        seen <- c(seen, pkg)
+      }
+    }
+  }
+
+  if (length(lines_to_remove) > 0L) {
+    content <- content[-lines_to_remove]
+    n <- length(lines_to_remove)
+  }
+
   list(content = content, n = n)
 }
 
