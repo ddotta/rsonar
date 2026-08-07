@@ -1131,17 +1131,17 @@ print.sonar_fix <- function(x, ...) {
 
 #' Install air R Code Formatter
 #'
-#' Downloads and installs the `air` R code formatter binary from the
-#' official GitHub releases. Supports Linux (x86_64, aarch64),
-#' macOS (Intel and Apple Silicon), and Windows.
+#' Downloads and runs the official air installer from the latest GitHub
+#' release. Uses the PowerShell installer on Windows and the shell installer
+#' on other platforms.
 #'
-#' @param version Specific version or `"latest"`. Default `"latest"`.
-#' @param force Logical. Reinstall even if already present. Default `FALSE`.
+#' @param force Logical. Reinstall even if air is already available on the
+#' system PATH. Default FALSE.
 #'
-#' @return The path to the installed binary (invisibly).
+#' @return The path to the installed air binary, invisibly.
 #' @seealso [sonar_fix()]
 #' @export
-install_air <- function(version = "latest", force = FALSE) {
+install_air <- function(force = FALSE) {
   air_bin <- Sys.which("air")
   
   if (nzchar(air_bin) && !force) {
