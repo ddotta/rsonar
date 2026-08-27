@@ -1,28 +1,25 @@
 # Install air R Code Formatter
 
-Downloads and installs the `air` R code formatter binary from the
-official GitHub releases. Supports Linux (x86_64, aarch64), macOS (Intel
-and Apple Silicon), and Windows.
+Downloads and runs the official air installer from the latest GitHub
+release. Uses the PowerShell installer on Windows and the shell
+installer on other platforms.
 
 ## Usage
 
 ``` r
-install_air(version = "latest", force = FALSE)
+install_air(force = FALSE)
 ```
 
 ## Arguments
 
-- version:
-
-  Specific version or `"latest"`. Default `"latest"`.
-
 - force:
 
-  Logical. Reinstall even if already present. Default `FALSE`.
+  Logical. Reinstall even if air is already available on the system
+  PATH. Default FALSE.
 
 ## Value
 
-The path to the installed binary (invisibly).
+The path to the installed air binary, invisibly.
 
 ## See also
 
