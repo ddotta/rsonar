@@ -16,7 +16,7 @@ sonar_fix(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
   verbose = interactive()
@@ -69,8 +69,11 @@ sonar_fix(
 
 - n_cores:
 
-  Number of cores for parallel processing. Default
-  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html).
+  Number of cores for parallel processing. Defaults to
+  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html)
+  on Unix-like systems and `1` on Windows, where
+  [`parallel::mclapply()`](https://rdrr.io/r/parallel/mclapply.html)
+  does not support forked parallelism.
 
 - report:
 

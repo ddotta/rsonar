@@ -68,6 +68,8 @@
 <code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: the <code>simplify</code> category now handles compound boolean expressions (<code>x == TRUE &amp;&amp; y</code> → <code>x &amp;&amp; y</code>, <code>x == FALSE \|\| y</code> → <code>!x \|\| y</code>) in addition to simple patterns (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 <li>
 <code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: fixed a bug in <code>assignment</code> where the right-hand side of <code>y = 2</code> was lost during <code>=</code> → <code>&lt;-</code> conversion (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+<li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: <code>n_cores</code> now defaults to <code>1</code> on Windows, where <code><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">parallel::mclapply()</a></code> does not support forked parallelism, and the parallel branch gracefully falls back to a single worker instead of erroring (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">

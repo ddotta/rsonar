@@ -37,6 +37,12 @@
   fixed a bug in `assignment` where the right-hand side of `y = 2` was
   lost during `=` → `<-` conversion
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  `n_cores` now defaults to `1` on Windows, where
+  [`parallel::mclapply()`](https://rdrr.io/r/parallel/mclapply.html)
+  does not support forked parallelism, and the parallel branch
+  gracefully falls back to a single worker instead of erroring
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
 
 ## rsonar 0.2.0 (2026-04-20)
 
