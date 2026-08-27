@@ -1131,75 +1131,53 @@ print.sonar_fix <- function(x, ...) {
 
 #' Install air R Code Formatter
 #'
-#' Downloads and installs the `air` R code formatter binary from the
-#' official GitHub releases. Supports Linux (x86_64, aarch64),
-#' macOS (Intel and Apple Silicon), and Windows.
+#' Downloads and runs the official air installer from the latest GitHub
+#' release. Uses the PowerShell installer on Windows and the shell installer
+#' on other platforms.
 #'
-#' @param version Specific version or `"latest"`. Default `"latest"`.
-#' @param force Logical. Reinstall even if already present. Default `FALSE`.
+#' @param force Logical. Reinstall even if air is already available on the
+#' system PATH. Default FALSE.
 #'
-#' @return The path to the installed binary (invisibly).
+#' @return The path to the installed air binary, invisibly.
 #' @seealso [sonar_fix()]
 #' @export
-install_air <- function(version = "latest", force = FALSE) {
+install_air <- function(force = FALSE) {
   air_bin <- Sys.which("air")
-  if (air_bin != "" && nchar(air_bin) > 0L && !force) {
-    cli::cli_inform(c("v" = "air already installed: {.path {air_bin}}"))
+  
+  if (nzchar(air_bin) && !force) {
+    cli::cli_inform(c(v = "air already installed: {.path {air_bin}}"))
     return(invisible(as.character(air_bin)))
   }
-
-  os <- switch(Sys.info()[["sysname"]],
-    Linux = "linux",
-    Darwin = "macos",
-    Windows = "windows",
-    cli::cli_abort("Unsupported OS")
-  )
-  arch <- switch(Sys.info()[["machine"]],
-    x86_64 = "x86_64",
-    amd64 = "x86_64",
-    aarch64 = "aarch64",
-    arm64 = "aarch64",
-    cli::cli_abort("Unsupported architecture")
-  )
-
-  ext <- if (os == "windows") "zip" else "tar.gz"
-  binary_name <- if (os == "windows") "air.exe" else "air"
-
+  
+  is_windows <- .Platform$OS.type == "windows"
+  installer <- if (is_windows) "air-installer.ps1" else "air-installer.sh"
+  
   url <- paste0(
-    "https://github.com/posit-dev/air/releases/",
-    if (version == "latest") "latest/download" else paste0("download/", version),
-    "/air-", os, "-", arch, ".", ext
+    "https://github.com/posit-dev/air/releases/latest/download/",
+    installer
   )
-
-  tmp_dir <- tempfile("air-")
-  dir.create(tmp_dir)
-  on.exit(unlink(tmp_dir, recursive = TRUE))
-
-  dest <- file.path(tmp_dir, paste0("air.", ext))
-  utils::download.file(url, dest, mode = "wb", quiet = TRUE)
-
-  if (ext == "zip") {
-    utils::unzip(dest, exdir = tmp_dir)
+  
+  file <- tempfile(fileext = if (is_windows) ".ps1" else ".sh")
+  on.exit(unlink(file))
+  
+  utils::download.file(url, file, mode = "wb", quiet = TRUE)
+  
+  status <- if (is_windows) {
+    system2(
+      "powershell",
+      c("-ExecutionPolicy", "Bypass", "-File", shQuote(file))
+    )
   } else {
-    utils::untar(dest, exdir = tmp_dir)
+    system2("sh", shQuote(file))
   }
-
-  # Locate binary
-  candidates <- list.files(tmp_dir, pattern = binary_name, recursive = TRUE, full.names = TRUE)
-  if (length(candidates) == 0L) cli::cli_abort("Could not find {binary_name} in archive.")
-
-  install_dir <- if (.Platform$OS.type == "windows") {
-    file.path(Sys.getenv("USERPROFILE"), "bin")
-  } else {
-    file.path(Sys.getenv("HOME"), ".local", "bin")
+  
+  if (status != 0L) {
+    cli::cli_abort("air installation failed.")
   }
-
-  dir.create(install_dir, showWarnings = FALSE)
-  dest_bin <- file.path(install_dir, binary_name)
-  file.copy(candidates[1], dest_bin, overwrite = TRUE)
-
-  if (.Platform$OS.type != "windows") Sys.chmod(dest_bin, "0755")
-
-  cli::cli_inform(c("v" = "air installed to {.path {dest_bin}}"))
-  invisible(dest_bin)
+  
+  air_bin <- Sys.which("air")
+  
+  cli::cli_inform(c(v = "air installed to {.path {air_bin}}"))
+  
+  invisible(as.character(air_bin))
 }

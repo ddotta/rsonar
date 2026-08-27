@@ -4,20 +4,19 @@
 \alias{install_air}
 \title{Install air R Code Formatter}
 \usage{
-install_air(version = "latest", force = FALSE)
+install_air(force = FALSE)
 }
 \arguments{
-\item{version}{Specific version or \code{"latest"}. Default \code{"latest"}.}
-
-\item{force}{Logical. Reinstall even if already present. Default \code{FALSE}.}
+\item{force}{Logical. Reinstall even if air is already available on the
+system PATH. Default FALSE.}
 }
 \value{
-The path to the installed binary (invisibly).
+The path to the installed air binary, invisibly.
 }
 \description{
-Downloads and installs the \code{air} R code formatter binary from the
-official GitHub releases. Supports Linux (x86_64, aarch64),
-macOS (Intel and Apple Silicon), and Windows.
+Downloads and runs the official air installer from the latest GitHub
+release. Uses the PowerShell installer on Windows and the shell installer
+on other platforms.
 }
 \seealso{
 \code{\link[=sonar_fix]{sonar_fix()}}
