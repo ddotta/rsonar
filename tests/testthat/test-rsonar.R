@@ -182,3 +182,22 @@ test_that("quality_score provides a quick local percentage", {
   expect_true(score$score >= 0 && score$score <= 100)
   expect_true(score$rating %in% c("A", "B", "C", "D", "E"))
 })
+
+test_that("sonar_fix handles Windows parallel limitations", {
+  skip_if_not_installed("parallel")
+
+  tmp <- withr::local_tempdir()
+  for (i in seq_len(6)) {
+    writeLines("x=1+1\n", file.path(tmp, sprintf("file_%02d.R", i)))
+  }
+
+  # Default n_cores is 1 on Windows, so this must not error.
+  res <- sonar_fix(tmp, fixes = "spacing", report = FALSE, verbose = FALSE)
+  expect_s3_class(res, "sonar_fix")
+
+  # Even an explicit multi-core request must fall back gracefully on Windows.
+  res <- sonar_fix(tmp,
+    fixes = "spacing", n_cores = 2, report = FALSE, verbose = FALSE
+  )
+  expect_s3_class(res, "sonar_fix")
+})

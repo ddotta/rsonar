@@ -37,8 +37,9 @@
 #'   modifying them. Default `FALSE`.
 #' @param parallel Logical. Use parallel processing for multiple files.
 #'   Default `TRUE`.
-#' @param n_cores Number of cores for parallel processing. Default
-#'   `parallel::detectCores()`.
+#' @param n_cores Number of cores for parallel processing. Defaults to
+#'   `parallel::detectCores()` on Unix-like systems and `1` on Windows, where
+#'   `parallel::mclapply()` does not support forked parallelism.
 #' @param report Logical. Generate a JSON report file. Default `TRUE`.
 #' @param report_file Path to the JSON report. Default `"sonar-fixes.json"`.
 #' @param verbose Logical. Show progress and result summary.
@@ -150,7 +151,7 @@ sonar_fix <- function(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
   verbose = interactive()
@@ -364,6 +365,12 @@ sonar_fix <- function(
 
   if (parallel && length(r_files) > 5 && requireNamespace("parallel", quietly = TRUE)) {
     n_workers <- min(n_cores, length(r_files))
+    if (.Platform$OS.type == "windows" && n_workers > 1L) {
+      cli::cli_inform(c(
+        "i" = "Windows does not support forked parallelism; using a single worker."
+      ))
+      n_workers <- 1L
+    }
     results <- parallel::mclapply(r_files, .process_file,
       mc.cores = n_workers
     )

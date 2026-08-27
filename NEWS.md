@@ -22,6 +22,9 @@
   in addition to simple patterns (#13)
 * `sonar_fix()`: fixed a bug in `assignment` where the right-hand side of
   `y = 2` was lost during `=` → `<-` conversion (#13)
+* `sonar_fix()`: `n_cores` now defaults to `1` on Windows, where
+  `parallel::mclapply()` does not support forked parallelism, and the parallel
+  branch gracefully falls back to a single worker instead of erroring (#13)
 
 # rsonar 0.2.0 (2026-04-20)
 

@@ -13,7 +13,7 @@ sonar_fix(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
   verbose = interactive()
@@ -49,8 +49,9 @@ modifying them. Default \code{FALSE}.}
 \item{parallel}{Logical. Use parallel processing for multiple files.
 Default \code{TRUE}.}
 
-\item{n_cores}{Number of cores for parallel processing. Default
-\code{parallel::detectCores()}.}
+\item{n_cores}{Number of cores for parallel processing. Defaults to
+\code{parallel::detectCores()} on Unix-like systems and \code{1} on Windows, where
+\code{parallel::mclapply()} does not support forked parallelism.}
 
 \item{report}{Logical. Generate a JSON report file. Default \code{TRUE}.}
 
