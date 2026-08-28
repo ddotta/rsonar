@@ -13,10 +13,10 @@ sonar_fix(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else min(parallel::detectCores(), 4L),
   report = TRUE,
   report_file = "sonar-fixes.json",
-  style_timeout = 300,
+  style_timeout = 30,
   verbose = interactive()
 )
 }
@@ -51,16 +51,17 @@ modifying them. Default \code{FALSE}.}
 Default \code{TRUE}.}
 
 \item{n_cores}{Number of cores for parallel processing. Defaults to
-\code{parallel::detectCores()} on Unix-like systems and \code{1} on Windows, where
-\code{parallel::mclapply()} does not support forked parallelism.}
+\code{parallel::detectCores()} (capped at \code{4}) on Unix-like systems and
+\code{1} on Windows, where \code{parallel::mclapply()} does not support forked
+parallelism.}
 
 \item{report}{Logical. Generate a JSON report file. Default \code{TRUE}.}
 
 \item{report_file}{Path to the JSON report. Default \code{"sonar-fixes.json"}.}
 
-\item{style_timeout}{Timeout in seconds for the styler formatting step.
-Prevents \code{styler::style_dir()} from blocking indefinitely in CI on files
-with parsing errors. Default \code{300} (5 minutes). Set to \code{Inf} to disable.}
+\item{style_timeout}{Timeout in seconds for styler formatting of each file.
+Prevents \code{styler::style_file()} from blocking indefinitely in CI on files
+with parsing errors. Default \code{30}. Set to \code{Inf} to disable.}
 
 \item{verbose}{Logical. Show progress and result summary.
 Default \code{interactive()}.}

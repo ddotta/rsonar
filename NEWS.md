@@ -25,11 +25,14 @@
 * `sonar_fix()`: `n_cores` now defaults to `1` on Windows, where
   `parallel::mclapply()` does not support forked parallelism, and the parallel
   branch gracefully falls back to a single worker instead of erroring (#13)
+* `sonar_fix()`: the default `n_cores` is now capped at `4` on Unix-like
+  systems, avoiding excessive forking inside CI containers (#13)
 * `sonar_analyse()`: style checking now uses a hard per-file timeout that
   reliably interrupts `styler` even when it blocks in native code, preventing
   CI pipelines from hanging indefinitely on malformed files (#13)
-* `sonar_fix()`: the styler formatting step now runs behind a hard timeout
-  (`style_timeout`, default 300s) for the same reason (#13)
+* `sonar_fix()`: styler formatting now runs per file behind a hard timeout
+  (`style_timeout`, default 30s), so a single malformed file is skipped instead
+  of stalling the whole pipeline (#13)
 * `sonar_fix()`: the `air` formatter now works, by defining the previously
   missing `.find_air()` helper that locates the `air` binary (#13)
 

@@ -38,13 +38,13 @@
 #' @param parallel Logical. Use parallel processing for multiple files.
 #'   Default `TRUE`.
 #' @param n_cores Number of cores for parallel processing. Defaults to
-#'   `parallel::detectCores()` on Unix-like systems and `1` on Windows, where
-#'   `parallel::mclapply()` does not support forked parallelism.
+#'   `parallel::detectCores()` (capped at `4`) on Unix-like systems and `1` on
+#'   Windows, where `parallel::mclapply()` does not support forked parallelism.
 #' @param report Logical. Generate a JSON report file. Default `TRUE`.
 #' @param report_file Path to the JSON report. Default `"sonar-fixes.json"`.
-#' @param style_timeout Timeout in seconds for the styler formatting step.
-#'   Prevents `styler::style_dir()` from blocking indefinitely in CI on files
-#'   with parsing errors. Default `300` (5 minutes). Set to `Inf` to disable.
+#' @param style_timeout Timeout in seconds for styler formatting of each file.
+#'   Prevents `styler::style_file()` from blocking indefinitely in CI on files
+#'   with parsing errors. Default `30`. Set to `Inf` to disable.
 #' @param verbose Logical. Show progress and result summary.
 #'   Default `interactive()`.
 #'
@@ -154,10 +154,10 @@ sonar_fix <- function(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else min(parallel::detectCores(), 4L),
   report = TRUE,
   report_file = "sonar-fixes.json",
-  style_timeout = 300,
+  style_timeout = 30,
   verbose = interactive()
 ) {
   path <- fs::path_abs(path)
@@ -425,39 +425,33 @@ sonar_fix <- function(
         cli::cli_warn("air not found. Run {.fn install_air} or use formatter=\"styler\".")
       }
     } else {
-      # Use styler, with a hard timeout so a malformed file cannot block the
-      # whole pipeline indefinitely.
+      # Use styler, per file, with a hard timeout so a single malformed file
+      # cannot block the whole pipeline.
       style_dry <- if (dry_run) "on" else "off"
-      n_changed <- tryCatch(
-        .run_with_timeout(
-          function() {
-            withr::with_dir(path, {
-              changed_list <- styler::style_dir(
-                path, dry = style_dry, include_roxygen_examples = FALSE
-              )
-              if (is.list(changed_list) && length(changed_list) > 0) {
-                sum(vapply(changed_list, function(x) {
-                  if (is.list(x) && !is.null(x$changed)) isTRUE(x$changed[1]) else 0L
-                }, integer(1)), na.rm = TRUE)
-              } else {
-                0L
-              }
-            })
-          },
-          timeout = style_timeout
-        ),
-        error = function(e) {
-          if (grepl("reached elapsed time", conditionMessage(e))) {
-            cli::cli_warn(c(
-              "!" = "Style formatting timed out after {.val {style_timeout}s}; skipping styler formatting.",
-              "i" = "Consider using {.code formatter = \"air\"} instead."
-            ))
-          } else {
-            cli::cli_warn("Style formatting failed: {conditionMessage(e)}")
+      style_results <- lapply(r_files, function(f) {
+        tryCatch(
+          .run_with_timeout(function() {
+            res <- styler::style_file(
+              as.character(f),
+              dry = style_dry,
+              include_roxygen_examples = FALSE
+            )
+            isTRUE(res$changed[1])
+          }, timeout = style_timeout),
+          error = function(e) {
+            if (grepl("reached elapsed time", conditionMessage(e))) {
+              cli::cli_warn(c(
+                "!" = "Style formatting timed out after {.val {style_timeout}s} for {.path {f}}",
+                "i" = "Consider using {.code formatter = \"air\"} instead."
+              ))
+            } else {
+              cli::cli_warn("Style formatting failed for {.path {f}}: {conditionMessage(e)}")
+            }
+            NA
           }
-          0L
-        }
-      )
+        )
+      })
+      n_changed <- sum(vapply(style_results, function(x) isTRUE(x), logical(1)), na.rm = TRUE)
       fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
     }
   }
