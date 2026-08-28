@@ -78,6 +78,8 @@
 <code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: styler formatting now runs per file behind a hard timeout (<code>style_timeout</code>, default 30s), so a single malformed file is skipped instead of stalling the whole pipeline (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 <li>
 <code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: the <code>air</code> formatter now works, by defining the previously missing <code>.find_air()</code> helper that locates the <code>air</code> binary (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+<li>
+<code><a href="../reference/sonar_autofix.html">sonar_autofix()</a></code>: <code>git push</code> / <code>git checkout</code> / <code>git add</code> failures are now detected and reported instead of silently claiming the Merge Request was created (e.g. when the CI token lacks the <code>write_repository</code> scope) (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">

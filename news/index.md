@@ -61,6 +61,11 @@
   the `air` formatter now works, by defining the previously missing
   `.find_air()` helper that locates the `air` binary
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_autofix()`](https://ddotta.github.io/rsonar/reference/sonar_autofix.md):
+  `git push` / `git checkout` / `git add` failures are now detected and
+  reported instead of silently claiming the Merge Request was created
+  (e.g. when the CI token lacks the `write_repository` scope)
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
 
 ## rsonar 0.2.0 (2026-04-20)
 
