@@ -43,14 +43,19 @@
   does not support forked parallelism, and the parallel branch
   gracefully falls back to a single worker instead of erroring
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  the default `n_cores` is now capped at `4` on Unix-like systems,
+  avoiding excessive forking inside CI containers
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
 - [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md):
   style checking now uses a hard per-file timeout that reliably
   interrupts `styler` even when it blocks in native code, preventing CI
   pipelines from hanging indefinitely on malformed files
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
 - [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
-  the styler formatting step now runs behind a hard timeout
-  (`style_timeout`, default 300s) for the same reason
+  styler formatting now runs per file behind a hard timeout
+  (`style_timeout`, default 30s), so a single malformed file is skipped
+  instead of stalling the whole pipeline
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
 - [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
   the `air` formatter now works, by defining the previously missing

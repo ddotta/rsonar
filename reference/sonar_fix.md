@@ -16,10 +16,10 @@ sonar_fix(
   dry_run = TRUE,
   backup = FALSE,
   parallel = TRUE,
-  n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
+  n_cores = if (.Platform$OS.type == "windows") 1L else min(parallel::detectCores(), 4L),
   report = TRUE,
   report_file = "sonar-fixes.json",
-  style_timeout = 300,
+  style_timeout = 30,
   verbose = interactive()
 )
 ```
@@ -72,7 +72,7 @@ sonar_fix(
 
   Number of cores for parallel processing. Defaults to
   [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html)
-  on Unix-like systems and `1` on Windows, where
+  (capped at `4`) on Unix-like systems and `1` on Windows, where
   [`parallel::mclapply()`](https://rdrr.io/r/parallel/mclapply.html)
   does not support forked parallelism.
 
@@ -86,10 +86,10 @@ sonar_fix(
 
 - style_timeout:
 
-  Timeout in seconds for the styler formatting step. Prevents
-  [`styler::style_dir()`](https://styler.r-lib.org/reference/style_dir.html)
+  Timeout in seconds for styler formatting of each file. Prevents
+  [`styler::style_file()`](https://styler.r-lib.org/reference/style_file.html)
   from blocking indefinitely in CI on files with parsing errors. Default
-  `300` (5 minutes). Set to `Inf` to disable.
+  `30`. Set to `Inf` to disable.
 
 - verbose:
 
