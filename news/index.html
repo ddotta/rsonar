@@ -74,6 +74,8 @@
 <code><a href="../reference/sonar_analyse.html">sonar_analyse()</a></code>: style checking now uses a hard per-file timeout that reliably interrupts <code>styler</code> even when it blocks in native code, preventing CI pipelines from hanging indefinitely on malformed files (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 <li>
 <code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: the styler formatting step now runs behind a hard timeout (<code>style_timeout</code>, default 300s) for the same reason (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
+<li>
+<code><a href="../reference/sonar_fix.html">sonar_fix()</a></code>: the <code>air</code> formatter now works, by defining the previously missing <code>.find_air()</code> helper that locates the <code>air</code> binary (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
