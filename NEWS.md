@@ -30,6 +30,8 @@
   CI pipelines from hanging indefinitely on malformed files (#13)
 * `sonar_fix()`: the styler formatting step now runs behind a hard timeout
   (`style_timeout`, default 300s) for the same reason (#13)
+* `sonar_fix()`: the `air` formatter now works, by defining the previously
+  missing `.find_air()` helper that locates the `air` binary (#13)
 
 # rsonar 0.2.0 (2026-04-20)
 

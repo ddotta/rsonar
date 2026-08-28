@@ -1139,6 +1139,26 @@ print.sonar_fix <- function(x, ...) {
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
 # ============================================================================
+# air helper
+# ============================================================================
+
+#' Locate the air formatter binary
+#'
+#' Returns the path to the `air` binary, looking it up on the system PATH.
+#' Throws an error when it is not available.
+#'
+#' @return The path to the `air` binary.
+#' @keywords internal
+#' @noRd
+.find_air <- function() {
+  air_bin <- Sys.which("air")
+  if (!nzchar(air_bin)) {
+    cli::cli_abort("air formatter not found. Run {.fn install_air} to install it.")
+  }
+  as.character(air_bin)
+}
+
+# ============================================================================
 # install_air - kept for backward compatibility
 # ============================================================================
 
