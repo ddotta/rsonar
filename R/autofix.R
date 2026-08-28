@@ -90,14 +90,23 @@ sonar_autofix <- function(
     system("git config --global user.email 'rsonar@ci.local'")
 
     br <- system("git branch -a", intern = TRUE)
-    if (any(grepl(branch, br))) {
+    checkout_status <- if (any(grepl(branch, br))) {
       system(paste("git checkout -B", branch))
     } else {
       system(paste("git checkout -b", branch))
     }
+    if (checkout_status != 0L) {
+      cli::cli_abort(c(
+        "x" = "Failed to create or switch to the auto-fix branch {.val {branch}}.",
+        "i" = "See the git output above for details."
+      ))
+    }
 
     # ajouter et committer les fichiers modifies (.gitignore exclut les JSON)
-    system("git add .")
+    add_status <- system("git add .")
+    if (add_status != 0L) {
+      cli::cli_abort(c("x" = "git add failed. See the git output above for details."))
+    }
     r <- system(paste("git commit -m", shQuote(commit_message)), intern = TRUE)
     status <- attr(r, "status")
     if (!is.null(status) && status != 0) {
@@ -126,7 +135,14 @@ sonar_autofix <- function(
       "-o merge_request.remove_source_branch=true"
     )
 
-    system(mr_cmd)
+    push_status <- system(mr_cmd)
+    if (push_status != 0L) {
+      cli::cli_abort(c(
+        "x" = "git push failed (exit code {push_status}): the auto-fix branch was not pushed.",
+        "i" = "Check that the CI token used in the git remote has the 'write_repository' scope, is not expired, and is correctly set in the CI/CD variables.",
+        "i" = "The git authentication error is shown just above."
+      ))
+    }
     if (verbose) cli::cli_inform(c("v" = "Merge Request created"))
   })
 
