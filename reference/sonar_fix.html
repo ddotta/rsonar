@@ -74,6 +74,7 @@ namespace usage, dead code detection, and more.</p>
 <span>  n_cores <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">.Platform</span><span class="op">$</span><span class="va">OS.type</span> <span class="op">==</span> <span class="st">"windows"</span><span class="op">)</span> <span class="fl">1L</span> <span class="kw">else</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  report <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  report_file <span class="op">=</span> <span class="st">"sonar-fixes.json"</span>,</span>
+<span>  style_timeout <span class="op">=</span> <span class="fl">300</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -139,6 +140,12 @@ Default <code>TRUE</code>.</p></dd>
 
 <dt id="arg-report-file">report_file<a class="anchor" aria-label="anchor" href="#arg-report-file"></a></dt>
 <dd><p>Path to the JSON report. Default <code>"sonar-fixes.json"</code>.</p></dd>
+
+
+<dt id="arg-style-timeout">style_timeout<a class="anchor" aria-label="anchor" href="#arg-style-timeout"></a></dt>
+<dd><p>Timeout in seconds for the styler formatting step.
+Prevents <code><a href="https://styler.r-lib.org/reference/style_dir.html" class="external-link">styler::style_dir()</a></code> from blocking indefinitely in CI on files
+with parsing errors. Default <code>300</code> (5 minutes). Set to <code>Inf</code> to disable.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

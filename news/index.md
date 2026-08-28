@@ -43,6 +43,15 @@
   does not support forked parallelism, and the parallel branch
   gracefully falls back to a single worker instead of erroring
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md):
+  style checking now uses a hard per-file timeout that reliably
+  interrupts `styler` even when it blocks in native code, preventing CI
+  pipelines from hanging indefinitely on malformed files
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
+- [`sonar_fix()`](https://ddotta.github.io/rsonar/reference/sonar_fix.md):
+  the styler formatting step now runs behind a hard timeout
+  (`style_timeout`, default 300s) for the same reason
+  ([\#13](https://github.com/ddotta/rsonar/issues/13))
 
 ## rsonar 0.2.0 (2026-04-20)
 

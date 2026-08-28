@@ -19,6 +19,7 @@ sonar_fix(
   n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
+  style_timeout = 300,
   verbose = interactive()
 )
 ```
@@ -82,6 +83,13 @@ sonar_fix(
 - report_file:
 
   Path to the JSON report. Default `"sonar-fixes.json"`.
+
+- style_timeout:
+
+  Timeout in seconds for the styler formatting step. Prevents
+  [`styler::style_dir()`](https://styler.r-lib.org/reference/style_dir.html)
+  from blocking indefinitely in CI on files with parsing errors. Default
+  `300` (5 minutes). Set to `Inf` to disable.
 
 - verbose:
 
