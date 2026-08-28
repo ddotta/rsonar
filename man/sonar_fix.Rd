@@ -16,6 +16,7 @@ sonar_fix(
   n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
+  style_timeout = 300,
   verbose = interactive()
 )
 }
@@ -56,6 +57,10 @@ Default \code{TRUE}.}
 \item{report}{Logical. Generate a JSON report file. Default \code{TRUE}.}
 
 \item{report_file}{Path to the JSON report. Default \code{"sonar-fixes.json"}.}
+
+\item{style_timeout}{Timeout in seconds for the styler formatting step.
+Prevents \code{styler::style_dir()} from blocking indefinitely in CI on files
+with parsing errors. Default \code{300} (5 minutes). Set to \code{Inf} to disable.}
 
 \item{verbose}{Logical. Show progress and result summary.
 Default \code{interactive()}.}

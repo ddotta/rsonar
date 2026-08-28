@@ -25,6 +25,11 @@
 * `sonar_fix()`: `n_cores` now defaults to `1` on Windows, where
   `parallel::mclapply()` does not support forked parallelism, and the parallel
   branch gracefully falls back to a single worker instead of erroring (#13)
+* `sonar_analyse()`: style checking now uses a hard per-file timeout that
+  reliably interrupts `styler` even when it blocks in native code, preventing
+  CI pipelines from hanging indefinitely on malformed files (#13)
+* `sonar_fix()`: the styler formatting step now runs behind a hard timeout
+  (`style_timeout`, default 300s) for the same reason (#13)
 
 # rsonar 0.2.0 (2026-04-20)
 

@@ -201,3 +201,17 @@ test_that("sonar_fix handles Windows parallel limitations", {
   )
   expect_s3_class(res, "sonar_fix")
 })
+
+test_that(".run_with_timeout returns the result of a fast function", {
+  expect_identical(rsonar:::.run_with_timeout(function() 42L, timeout = 5), 42L)
+})
+
+test_that(".run_with_timeout interrupts a long-running function", {
+  start <- Sys.time()
+  expect_error(
+    rsonar:::.run_with_timeout(function() Sys.sleep(5), timeout = 1),
+    "reached elapsed time"
+  )
+  elapsed <- as.numeric(difftime(Sys.time(), start, units = "secs"))
+  expect_lt(elapsed, 5)
+})

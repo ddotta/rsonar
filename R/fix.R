@@ -42,6 +42,9 @@
 #'   `parallel::mclapply()` does not support forked parallelism.
 #' @param report Logical. Generate a JSON report file. Default `TRUE`.
 #' @param report_file Path to the JSON report. Default `"sonar-fixes.json"`.
+#' @param style_timeout Timeout in seconds for the styler formatting step.
+#'   Prevents `styler::style_dir()` from blocking indefinitely in CI on files
+#'   with parsing errors. Default `300` (5 minutes). Set to `Inf` to disable.
 #' @param verbose Logical. Show progress and result summary.
 #'   Default `interactive()`.
 #'
@@ -154,6 +157,7 @@ sonar_fix <- function(
   n_cores = if (.Platform$OS.type == "windows") 1L else parallel::detectCores(),
   report = TRUE,
   report_file = "sonar-fixes.json",
+  style_timeout = 300,
   verbose = interactive()
 ) {
   path <- fs::path_abs(path)
@@ -421,38 +425,40 @@ sonar_fix <- function(
         cli::cli_warn("air not found. Run {.fn install_air} or use formatter=\"styler\".")
       }
     } else {
-      # Use styler
-      if (dry_run) {
-        withr::with_dir(path, {
-          tryCatch(
-            {
-              changed_list <- styler::style_dir(path, dry = "on", include_roxygen_examples = FALSE)
+      # Use styler, with a hard timeout so a malformed file cannot block the
+      # whole pipeline indefinitely.
+      style_dry <- if (dry_run) "on" else "off"
+      n_changed <- tryCatch(
+        .run_with_timeout(
+          function() {
+            withr::with_dir(path, {
+              changed_list <- styler::style_dir(
+                path, dry = style_dry, include_roxygen_examples = FALSE
+              )
               if (is.list(changed_list) && length(changed_list) > 0) {
-                n_changed <- sum(vapply(changed_list, function(x) {
+                sum(vapply(changed_list, function(x) {
                   if (is.list(x) && !is.null(x$changed)) isTRUE(x$changed[1]) else 0L
                 }, integer(1)), na.rm = TRUE)
-                fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
+              } else {
+                0L
               }
-            },
-            error = function(e) NULL
-          )
-        })
-      } else {
-        withr::with_dir(path, {
-          tryCatch(
-            {
-              changed_list <- styler::style_dir(path, dry = "off", include_roxygen_examples = FALSE)
-              if (is.list(changed_list) && length(changed_list) > 0) {
-                n_changed <- sum(vapply(changed_list, function(x) {
-                  if (is.list(x) && !is.null(x$changed)) isTRUE(x$changed[1]) else 0L
-                }, integer(1)), na.rm = TRUE)
-                fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
-              }
-            },
-            error = function(e) NULL
-          )
-        })
-      }
+            })
+          },
+          timeout = style_timeout
+        ),
+        error = function(e) {
+          if (grepl("reached elapsed time", conditionMessage(e))) {
+            cli::cli_warn(c(
+              "!" = "Style formatting timed out after {.val {style_timeout}s}; skipping styler formatting.",
+              "i" = "Consider using {.code formatter = \"air\"} instead."
+            ))
+          } else {
+            cli::cli_warn("Style formatting failed: {conditionMessage(e)}")
+          }
+          0L
+        }
+      )
+      fixes_total[["styler"]] <- (fixes_total[["styler"]] %||% 0L) + n_changed
     }
   }
 

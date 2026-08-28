@@ -159,31 +159,29 @@ sonar_analyse <- function(
 
 .run_style <- function(r_files, timeout = 30) {
   results <- lapply(r_files, function(f) {
-    tryCatch({
-      # Set a per-file timeout to prevent styler from blocking indefinitely.
-      # styler may hang on files with parsing errors in non-interactive CI.
-      setTimeLimit(elapsed = timeout, transient = TRUE)
-      on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
-
-      res <- styler::style_file(
-        as.character(f),
-        dry = "on",
-        include_roxygen_examples = FALSE
-      )
-      data.frame(
-        file    = as.character(f),
-        changed = isTRUE(res$changed[1]),
-        stringsAsFactors = FALSE
-      )
-    }, error = function(e) {
-      if (grepl("reached elapsed time", conditionMessage(e))) {
-        cli::cli_warn(c(
-          "!" = "Style check timed out after {.val {timeout}s} for {.path {f}}",
-          "i" = "The file will be skipped. Consider using {.code formatter = \"air\"} instead."
-        ))
+    tryCatch(
+      .run_with_timeout(function() {
+        res <- styler::style_file(
+          as.character(f),
+          dry = "on",
+          include_roxygen_examples = FALSE
+        )
+        data.frame(
+          file    = as.character(f),
+          changed = isTRUE(res$changed[1]),
+          stringsAsFactors = FALSE
+        )
+      }, timeout = timeout),
+      error = function(e) {
+        if (grepl("reached elapsed time", conditionMessage(e))) {
+          cli::cli_warn(c(
+            "!" = "Style check timed out after {.val {timeout}s} for {.path {f}}",
+            "i" = "The file will be skipped. Consider using {.code formatter = \"air\"} instead."
+          ))
+        }
+        data.frame(file = as.character(f), changed = NA, stringsAsFactors = FALSE)
       }
-      data.frame(file = as.character(f), changed = NA, stringsAsFactors = FALSE)
-    })
+    )
   })
   do.call(rbind, results)
 }
