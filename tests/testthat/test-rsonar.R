@@ -103,6 +103,28 @@ test_that("sonar_hotspots attributes lint debt per file and matches debt_index",
   expect_equal(sum(hotspots$debt_minutes), debt_index(res)$minutes)
 })
 
+test_that("sonar_hotspots matches lint files by basename when paths differ", {
+  tmp <- withr::local_tempdir()
+  writeLines(c("x=1+1", "T <- TRUE"), file.path(tmp, "bad.R"))
+  writeLines("clean <- 1\n", file.path(tmp, "clean.R"))
+
+  res <- sonar_analyse(tmp, include_coverage = FALSE,
+                       include_goodpractice = FALSE, verbose = FALSE)
+
+  # Simulate lintr returning symlink-resolved/absolute paths that do not
+  # match fs::dir_ls() output (as happens on Linux NFS mounts).
+  fake_root <- file.path(tmp, "..", "resolved")
+  for (i in seq_along(res$lint)) {
+    res$lint[[i]]$filename <- file.path(fake_root, basename(res$lint[[i]]$filename))
+  }
+
+  hotspots <- sonar_hotspots(res, n = Inf)
+  bad <- hotspots[basename(hotspots$file) == "bad.R", ]
+  expect_equal(nrow(bad), 1L)
+  expect_true(bad$lint_style > 0)
+  expect_equal(sum(hotspots$debt_minutes), debt_index(res)$minutes)
+})
+
 test_that("export_junit generates a valid XML file", {
   tmp     <- withr::local_tempdir()
   out_dir <- withr::local_tempdir()

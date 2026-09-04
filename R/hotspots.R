@@ -73,20 +73,38 @@ sonar_hotspots <- function(
 
   # --- Lint issues, per file --------------------------------------------
   if (length(x$lint) > 0) {
-    lint_file <- vapply(x$lint, function(i) {
-      as.character(fs::path_abs(as.character(i$filename), start = x$path))
-    }, character(1))
+    lint_file <- vapply(x$lint, function(i) as.character(i$filename), character(1))
     lint_type <- vapply(x$lint, function(i) as.character(i$type), character(1))
 
-    tab <- table(lint_file, lint_type)
-    tab_files <- rownames(tab)
-    tab_types <- colnames(tab)
+    # Match lint filenames to x$r_files robustly: lintr may return relative,
+    # absolute or symlink-resolved paths, so fall back to basename matching.
+    base_files <- as.character(base$file)
+    base_names <- basename(base_files)
 
-    for (f in tab_files) {
-      if (!f %in% base$file) next
-      if ("error"   %in% tab_types) base[f, "lint_errors"]   <- tab[f, "error"]
-      if ("warning" %in% tab_types) base[f, "lint_warnings"] <- tab[f, "warning"]
-      if ("style"   %in% tab_types) base[f, "lint_style"]    <- tab[f, "style"]
+    lint_key <- vapply(lint_file, function(f) {
+      if (f %in% base_files) return(f)
+      abs_f <- as.character(fs::path_abs(f, start = x$path))
+      if (abs_f %in% base_files) return(abs_f)
+      b <- basename(f)
+      hits <- base_files[base_names == b]
+      if (length(hits) == 1L) return(hits[[1L]])
+      NA_character_
+    }, character(1))
+
+    keep <- !is.na(lint_key)
+    lint_key <- lint_key[keep]
+    lint_type <- lint_type[keep]
+
+    if (length(lint_key) > 0L) {
+      tab <- table(lint_key, lint_type)
+      tab_files <- rownames(tab)
+      tab_types <- colnames(tab)
+
+      for (f in tab_files) {
+        if ("error"   %in% tab_types) base[f, "lint_errors"]   <- tab[f, "error"]
+        if ("warning" %in% tab_types) base[f, "lint_warnings"] <- tab[f, "warning"]
+        if ("style"   %in% tab_types) base[f, "lint_style"]    <- tab[f, "style"]
+      }
     }
   }
 

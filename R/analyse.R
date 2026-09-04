@@ -152,13 +152,23 @@ sonar_analyse <- function(
       lintr::lint_dir(path)
     })
 
-    # lintr::lint_dir() returns file names relative to `path`. Make them
-    # absolute so downstream consumers (sonar_hotspots(), sonar_report(),
-    # export_*()) can match them against x$r_files (which are absolute).
+    # lintr::lint_dir() can return file paths that are relative, absolute, or
+    # symlink-resolved depending on the lintr version and platform (e.g.
+    # normalizePath() on Linux resolves the NFS symlink while fs::dir_ls()
+    # does not). Re-map every lint onto the matching entry of r_files so that
+    # downstream consumers (sonar_hotspots(), sonar_report(), export_*) can
+    # match lints to files reliably.
+    r_files <- as.character(r_files)
+    r_base <- basename(r_files)
+
     for (i in seq_along(lints)) {
-      lints[[i]]$filename <- as.character(
-        fs::path_abs(as.character(lints[[i]]$filename), start = path)
-      )
+      f <- as.character(lints[[i]]$filename)
+      hit <- which(r_base == basename(f))
+      lints[[i]]$filename <- if (length(hit) == 1L) {
+        r_files[[hit]]
+      } else {
+        as.character(fs::path_abs(f, start = path))
+      }
     }
 
     lints
