@@ -27,6 +27,23 @@ test_that("sonar_analyse detects lint issues", {
   expect_true(res$metrics$n_lint_issues > 0)
 })
 
+test_that("sonar_analyse computes coverage for non-package projects", {
+  skip_if_not_installed("testthat")
+
+  tmp <- withr::local_tempdir()
+  writeLines("add_one <- function(x) x + 1\n", file.path(tmp, "foo.R"))
+  dir.create(file.path(tmp, "tests", "testthat"), recursive = TRUE)
+  writeLines(
+    "test_that(\"add_one works\", { expect_equal(add_one(1), 2) })\n",
+    file.path(tmp, "tests", "testthat", "test-foo.R")
+  )
+
+  res <- sonar_analyse(tmp, include_goodpractice = FALSE, verbose = FALSE)
+
+  expect_false(is.na(res$metrics$coverage_pct))
+  expect_equal(res$metrics$coverage_pct, 100)
+})
+
 test_that("debt_index returns a valid rsonar_debt object", {
   tmp <- withr::local_tempdir()
   writeLines("x <- 1\n", file.path(tmp, "ok.R"))

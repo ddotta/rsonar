@@ -96,7 +96,7 @@ sonar_analyse <- function(
   coverage_results <- NULL
   if (include_coverage) {
     .msg("Coverage measurement (covr)...")
-    coverage_results <- .run_coverage(path)
+    coverage_results <- .run_coverage(path, r_files)
   }
 
   # --- Goodpractice ---
@@ -207,16 +207,50 @@ sonar_analyse <- function(
   do.call(rbind, results)
 }
 
-.run_coverage <- function(path) {
+.run_coverage <- function(path, r_files = NULL) {
   tryCatch({
     withr::with_dir(path, {
-      # Reuse already-installed packages in CI to avoid missing Suggests.
-      covr::package_coverage(path = path, clean = FALSE)
+      if (fs::file_exists("DESCRIPTION")) {
+        # Package project: measure coverage the standard covr way.
+        covr::package_coverage(path = path, clean = FALSE)
+      } else {
+        # Plain R project (no DESCRIPTION): measure coverage of the scripts
+        # against the test files with covr::file_coverage(), which does not
+        # require a package structure.
+        if (!requireNamespace("testthat", quietly = TRUE)) {
+          cli::cli_inform(c(
+            "i" = "Coverage for non-package projects requires {.pkg testthat}."
+          ))
+          return(NULL)
+        }
+
+        test_files   <- r_files[.is_test_file(r_files, path)]
+        source_files <- setdiff(r_files, test_files)
+
+        if (length(source_files) == 0L || length(test_files) == 0L) {
+          cli::cli_inform(c(
+            "i" = "Coverage skipped: both source scripts and test files are required."
+          ))
+          return(NULL)
+        }
+
+        covr::file_coverage(
+          source_files = source_files,
+          test_files   = test_files,
+          parent_env   = asNamespace("testthat")
+        )
+      }
     })
   }, error = function(e) {
     cli::cli_warn("Coverage could not be computed: {conditionMessage(e)}")
     NULL
   })
+}
+
+# Test files live under the standard `tests/` directory.
+.is_test_file <- function(files, path) {
+  rel <- fs::path_rel(files, start = path)
+  grepl("^tests[/\\\\]", rel)
 }
 
 .run_goodpractice <- function(path) {
