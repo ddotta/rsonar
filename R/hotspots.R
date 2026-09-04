@@ -73,7 +73,9 @@ sonar_hotspots <- function(
 
   # --- Lint issues, per file --------------------------------------------
   if (length(x$lint) > 0) {
-    lint_file <- vapply(x$lint, function(i) as.character(i$filename), character(1))
+    lint_file <- vapply(x$lint, function(i) {
+      as.character(fs::path_abs(as.character(i$filename), start = x$path))
+    }, character(1))
     lint_type <- vapply(x$lint, function(i) as.character(i$type), character(1))
 
     tab <- table(lint_file, lint_type)

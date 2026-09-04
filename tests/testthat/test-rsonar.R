@@ -83,6 +83,26 @@ test_that("sonar_report generates an HTML file", {
   expect_true(any(grepl("rsonar", content)))
 })
 
+test_that("sonar_hotspots attributes lint debt per file and matches debt_index", {
+  tmp <- withr::local_tempdir()
+  writeLines(c("x=1+1", "T <- TRUE"), file.path(tmp, "bad.R"))
+  writeLines("clean <- 1\n", file.path(tmp, "clean.R"))
+
+  res <- sonar_analyse(tmp, include_coverage = FALSE,
+                       include_goodpractice = FALSE, verbose = FALSE)
+  hotspots <- sonar_hotspots(res, n = Inf)
+
+  expect_s3_class(hotspots, "rsonar_hotspots")
+  expect_true(is.data.frame(hotspots))
+
+  bad <- hotspots[basename(hotspots$file) == "bad.R", ]
+  expect_equal(nrow(bad), 1L)
+  expect_true(bad$lint_style > 0)
+
+  # Per-file debt must add up to the project-wide debt index.
+  expect_equal(sum(hotspots$debt_minutes), debt_index(res)$minutes)
+})
+
 test_that("export_junit generates a valid XML file", {
   tmp     <- withr::local_tempdir()
   out_dir <- withr::local_tempdir()

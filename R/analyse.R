@@ -148,9 +148,20 @@ sonar_analyse <- function(
       if (fs::file_exists(candidate)) lintr_config <- candidate
     }
 
-    withr::with_dir(path, {
+    lints <- withr::with_dir(path, {
       lintr::lint_dir(path)
     })
+
+    # lintr::lint_dir() returns file names relative to `path`. Make them
+    # absolute so downstream consumers (sonar_hotspots(), sonar_report(),
+    # export_*()) can match them against x$r_files (which are absolute).
+    for (i in seq_along(lints)) {
+      lints[[i]]$filename <- as.character(
+        fs::path_abs(as.character(lints[[i]]$filename), start = path)
+      )
+    }
+
+    lints
   }, error = function(e) {
     cli::cli_warn("Lint error: {conditionMessage(e)}")
     list()
