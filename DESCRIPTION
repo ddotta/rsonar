@@ -1,6 +1,6 @@
 Package: rsonar
 Title: R Code Quality Analysis Inspired by SonarQube
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     person("Damien Dotta", role = c("aut", "cre"),
            email = "damien.dotta@live.fr")
