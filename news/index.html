@@ -81,6 +81,13 @@
 <li>
 <code><a href="../reference/sonar_autofix.html">sonar_autofix()</a></code>: <code>git push</code> / <code>git checkout</code> / <code>git add</code> failures are now detected and reported instead of silently claiming the Merge Request was created (e.g. when the CI token lacks the <code>write_repository</code> scope) (<a href="https://github.com/ddotta/rsonar/issues/13" class="external-link">#13</a>)</li>
 </ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-0-3-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h4>
+<ul><li>
+<code><a href="../reference/sonar_hotspots.html">sonar_hotspots()</a></code>: lint issues are now attributed to the correct file even when lintr returns relative, absolute, or symlink-resolved paths that do not match <code><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">fs::dir_ls()</a></code> output (e.g. on Linux NFS mounts). Previously the per-file lint columns stayed at <code>0</code>, showing only the styler debt.</li>
+<li>
+<code><a href="../reference/sonar_analyse.html">sonar_analyse()</a></code>: coverage is now computed for plain R projects (no <code>DESCRIPTION</code>/package structure) via <code><a href="http://covr.r-lib.org/reference/file_coverage.html" class="external-link">covr::file_coverage()</a></code>. Previously adding a <code>tests/</code> directory to a non-package project produced the confusing warning <code>... does not contain a package!</code>.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="rsonar-020-2026-04-20">rsonar 0.2.0 (2026-04-20)<a class="anchor" aria-label="anchor" href="#rsonar-020-2026-04-20"></a></h2>

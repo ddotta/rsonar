@@ -67,6 +67,21 @@
   (e.g. when the CI token lacks the `write_repository` scope)
   ([\#13](https://github.com/ddotta/rsonar/issues/13))
 
+#### Bug fixes
+
+- [`sonar_hotspots()`](https://ddotta.github.io/rsonar/reference/sonar_hotspots.md):
+  lint issues are now attributed to the correct file even when lintr
+  returns relative, absolute, or symlink-resolved paths that do not
+  match [`fs::dir_ls()`](https://fs.r-lib.org/reference/dir_ls.html)
+  output (e.g. on Linux NFS mounts). Previously the per-file lint
+  columns stayed at `0`, showing only the styler debt.
+- [`sonar_analyse()`](https://ddotta.github.io/rsonar/reference/sonar_analyse.md):
+  coverage is now computed for plain R projects (no
+  `DESCRIPTION`/package structure) via
+  [`covr::file_coverage()`](http://covr.r-lib.org/reference/file_coverage.md).
+  Previously adding a `tests/` directory to a non-package project
+  produced the confusing warning `... does not contain a package!`.
+
 ## rsonar 0.2.0 (2026-04-20)
 
 #### New features
