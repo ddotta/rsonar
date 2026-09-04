@@ -1,6 +1,6 @@
 # Changelog
 
-## rsonar (development version)
+## rsonar 0.3.0 (2026-04-20)
 
 #### New features
 
