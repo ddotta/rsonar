@@ -208,38 +208,54 @@ sonar_analyse <- function(
 }
 
 .run_coverage <- function(path, r_files = NULL) {
-  tryCatch({
+  # Try package coverage first. For a plain R project (no package structure)
+  # covr throws "does not contain a package!", in which case we fall back to
+  # file_coverage(), which measures coverage of standalone scripts.
+  coverage <- tryCatch(
     withr::with_dir(path, {
-      if (fs::file_exists("DESCRIPTION")) {
-        # Package project: measure coverage the standard covr way.
-        covr::package_coverage(path = path, clean = FALSE)
-      } else {
-        # Plain R project (no DESCRIPTION): measure coverage of the scripts
-        # against the test files with covr::file_coverage(), which does not
-        # require a package structure.
-        if (!requireNamespace("testthat", quietly = TRUE)) {
-          cli::cli_inform(c(
-            "i" = "Coverage for non-package projects requires {.pkg testthat}."
-          ))
-          return(NULL)
-        }
+      covr::package_coverage(path = path, clean = FALSE)
+    }),
+    error = function(e) e
+  )
 
-        test_files   <- r_files[.is_test_file(r_files, path)]
-        source_files <- setdiff(r_files, test_files)
+  if (!inherits(coverage, "error")) {
+    return(coverage)
+  }
 
-        if (length(source_files) == 0L || length(test_files) == 0L) {
-          cli::cli_inform(c(
-            "i" = "Coverage skipped: both source scripts and test files are required."
-          ))
-          return(NULL)
-        }
+  if (!grepl("does not contain a package", conditionMessage(coverage), fixed = TRUE)) {
+    cli::cli_warn("Coverage could not be computed: {conditionMessage(coverage)}")
+    return(NULL)
+  }
 
-        covr::file_coverage(
-          source_files = source_files,
-          test_files   = test_files,
-          parent_env   = asNamespace("testthat")
-        )
-      }
+  .run_file_coverage(path, r_files)
+}
+
+# Coverage for plain R projects (no DESCRIPTION / package structure).
+.run_file_coverage <- function(path, r_files) {
+  tryCatch({
+    if (!requireNamespace("testthat", quietly = TRUE)) {
+      cli::cli_inform(c(
+        "i" = "Coverage for non-package projects requires {.pkg testthat}."
+      ))
+      return(NULL)
+    }
+
+    test_files   <- r_files[.is_test_file(r_files, path)]
+    source_files <- setdiff(r_files, test_files)
+
+    if (length(source_files) == 0L || length(test_files) == 0L) {
+      cli::cli_inform(c(
+        "i" = "Coverage skipped: both source scripts and test files are required."
+      ))
+      return(NULL)
+    }
+
+    withr::with_dir(path, {
+      covr::file_coverage(
+        source_files = source_files,
+        test_files   = test_files,
+        parent_env   = asNamespace("testthat")
+      )
     })
   }, error = function(e) {
     cli::cli_warn("Coverage could not be computed: {conditionMessage(e)}")
